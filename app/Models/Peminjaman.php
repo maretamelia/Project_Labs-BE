@@ -9,19 +9,21 @@ class Peminjaman extends Model
     protected $table = 'peminjaman';
 
     protected $fillable = [
-        'customer_id',
-        'status',
+        'user_id',
+        'barang_id',
+        'jumlal',
         'tanggal_pinjam',
-        'tanggal_kembali'
+        'tanggal_kembali',
+        'status'
     ];
 
-    public function customer()
+    public function user()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(user::class, 'user_id');
     }
 
-    public function detail()
+    public function barang()
     {
-        return $this->hasMany(PeminjamanDetail::class);
+        return $this->belongsTo(barang::class, 'barang_id');
     }
 }
