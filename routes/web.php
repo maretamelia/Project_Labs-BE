@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\User\BarangUserController;
+use App\Http\Controllers\User\PeminjamanController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -39,6 +41,24 @@ Route::middleware('auth')->group(function () {
     Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
     Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
     Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
+});
+
+// ROUTE USER 
+
+    Route::prefix('user')->middleware(['auth'])->group(function () {
+    Route::get('barangs', [BarangUserController::class, 'index'])->name('user.barangs.index');
+    Route::get('barangs/{barang}', [BarangUserController::class, 'show'])->name('user.barangs.show');
+});
+
+    Route::prefix('user')->middleware(['auth'])->group(function () {
+    Route::get('peminjaman', [PeminjamanController::class, 'index'])
+        ->name('user.peminjaman.index');
+
+    Route::get('peminjaman/create', [PeminjamanController::class, 'create'])
+        ->name('user.peminjaman.create');
+
+    Route::post('peminjaman', [PeminjamanController::class, 'store'])
+        ->name('user.peminjaman.store');
 });
 
 require __DIR__.'/auth.php';
