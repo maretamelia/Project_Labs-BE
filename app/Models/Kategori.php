@@ -9,6 +9,6 @@ class Kategori extends Model
 {
     use HasFactory;
 
-    protected $table = 'category_barang'; // nama tabel di DB
+    protected $table = 'category_barangs'; // nama tabel di DB
     protected $fillable = ['nama_kategori']; // kolom yang bisa diisi massal
 }
