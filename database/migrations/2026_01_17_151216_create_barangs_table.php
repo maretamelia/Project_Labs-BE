@@ -13,7 +13,7 @@ return new class extends Migration
 
             // 🔗 RELASI KE CATEGORY
             $table->foreignId('category_id')
-                  ->constrained('category_barang')
+                  ->constrained('category_barangs')
                   ->cascadeOnDelete();
 
             $table->string('nama_barang', 100);
