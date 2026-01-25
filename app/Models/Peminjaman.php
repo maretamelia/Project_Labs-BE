@@ -2,28 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use App\Models\Barang;
 
 class Peminjaman extends Model
-{
     protected $table = 'peminjamans';
 
     protected $fillable = [
         'user_id',
         'barang_id',
-        'jumlal',
+        'jumlah',
         'tanggal_pinjam',
         'tanggal_kembali',
         'status'
     ];
 
+    // Relasi ke user
     public function user()
     {
-        return $this->belongsTo(user::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
+    // Relasi ke barang
     public function barang()
     {
-        return $this->belongsTo(barang::class, 'barang_id');
+        return $this->belongsTo(Barang::class, 'barang_id');
     }
-}
+

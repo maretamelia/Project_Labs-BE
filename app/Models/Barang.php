@@ -4,28 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Kategori;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\CategoryBarang;
 
 class Barang extends Model
 {
     use HasFactory;
-
-    // Nama tabel di database
     protected $table = 'barangs';
 
-    // Kolom yang bisa diisi massal
     protected $fillable = [
-        'nama_barang',
         'category_id',
+        'nama_barang',
         'kode_barang',
         'stok',
-        'deskripsi',
         'image',
+        'deskripsi'
     ];
 
-    // Relasi ke kategori
-    public function kategori()
+    public function category()
     {
-        return $this->belongsTo(Kategori::class, 'category_id');
+        return $this->belongsTo(CategoryBarang::class, 'category_id');
+    }
+
+    public function peminjamans()
+    {
+        return $this->hasMany(Peminjaman::class, 'barang_id');
     }
 }
