@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Peminjaman;
 
-class PeminjamanController extends Controller
+class PeminjamanAdminController extends Controller
 {
     public function index()
     {

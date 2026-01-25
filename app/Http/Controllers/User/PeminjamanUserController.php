@@ -7,12 +7,12 @@ use App\Models\Peminjaman;
 use App\Models\Barang;
 use Illuminate\Support\Facades\Auth;
 
-class PeminjamanController extends Controller
+class PeminjamanUserController extends Controller
 {
     public function create()
     {
         $barangs = Barang::all();
-        return view('user.peminjaman.create', compact('barangs'));
+        return view('user.peminjaman.create',compact('barangs'));
     }
 
     public function store(Request $request)
@@ -45,5 +45,10 @@ class PeminjamanController extends Controller
 
         return redirect()->route('user.peminjaman.index')
             ->with('success', 'Peminjaman berhasil diajukan');
+    }
+    public function index()
+    {
+        $peminjamans = Peminjaman::where('user_id', Auth::id())->get();
+        return view('user.peminjaman.index', compact('peminjamans'));
     }
 }
