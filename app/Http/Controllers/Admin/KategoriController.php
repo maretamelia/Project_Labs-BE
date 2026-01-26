@@ -3,70 +3,103 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Kategori;
+use App\Models\CategoryBarang;
 use Illuminate\Http\Request;
 
 class KategoriController extends Controller
 {
-    // ✨ Tampil semua kategori
+    // ✨ API: detail 1 kategori
+    public function show(CategoryBarang $kategori)
+    {
+        return response()->json($kategori);
+    }
+
+    // ✨ List kategori (web + API)
     public function index()
     {
-        // Ambil semua data kategori dari database
-        $kategori = Kategori::all();
-        // Kirim data ke view index.blade.php
+        $kategori = CategoryBarang::all();
+
+        // Kalau dipanggil dari API
+        if (request()->is('api/*')) {
+            return response()->json($kategori);
+        }
+
+        // Kalau dipanggil dari web
         return view('admin.kategori.index', compact('kategori'));
     }
 
-    // ✨ Tampil form tambah kategori
+    // ✨ Form tambah kategori (web)
     public function create()
     {
-        // Cukup panggil view create.blade.php
         return view('admin.kategori.create');
     }
 
-    // ✨ Simpan kategori baru ke database
+    // ✨ Simpan kategori (web + API)
     public function store(Request $request)
     {
-        // Validasi input, nama_kategori wajib diisi
         $request->validate([
             'nama_kategori' => 'required|string|max:255',
         ]);
 
-        // Simpan ke database
-        Kategori::create($request->all());
+        $kategori = CategoryBarang::create([
+            'nama_kategori' => $request->nama_kategori,
+        ]);
 
-        // Redirect kembali ke halaman index dengan pesan sukses
-        return redirect()->route('kategori.index')->with('success', 'Kategori berhasil ditambahkan');
+        // Kalau dipanggil dari API
+        if (request()->is('api/*')) {
+            return response()->json([
+                'message' => 'Kategori berhasil ditambahkan',
+                'data' => $kategori
+            ], 201);
+        }
+
+        // Kalau dipanggil dari web
+        return redirect()->route('kategori.index')
+            ->with('success', 'Kategori berhasil ditambahkan');
     }
 
-    // ✨ Tampil form edit kategori
-    public function edit(Kategori $kategori)
+    // ✨ Form edit kategori (web)
+    public function edit(CategoryBarang $kategori)
     {
-        // Kirim data kategori yang mau diedit ke view edit.blade.php
         return view('admin.kategori.edit', compact('kategori'));
     }
 
-    // ✨ Update kategori di database
-    public function update(Request $request, Kategori $kategori)
+    // ✨ Update kategori (web + API)
+    public function update(Request $request, CategoryBarang $kategori)
     {
-        // Validasi input
         $request->validate([
             'nama_kategori' => 'required|string|max:255',
         ]);
 
-        // Update data
-        $kategori->update($request->all());
+        $kategori->update([
+            'nama_kategori' => $request->nama_kategori,
+        ]);
 
-        // Redirect ke index dengan pesan sukses
-        return redirect()->route('kategori.index')->with('success', 'Kategori berhasil diubah');
+        // Kalau dipanggil dari API
+        if (request()->is('api/*')) {
+            return response()->json([
+                'message' => 'Kategori berhasil diubah',
+                'data' => $kategori
+            ]);
+        }
+
+        return redirect()->route('kategori.index')
+            ->with('success', 'Kategori berhasil diubah');
     }
 
-    // ✨ Hapus kategori dari database
-    public function destroy(Kategori $kategori)
+    // ✨ Hapus kategori (web + API)
+    public function destroy(CategoryBarang $kategori)
     {
         $kategori->delete();
 
-        // Redirect ke index dengan pesan sukses
-        return redirect()->route('kategori.index')->with('success', 'Kategori berhasil dihapus');
+        // Kalau dipanggil dari API
+        if (request()->is('api/*')) {
+            return response()->json([
+                'message' => 'Kategori berhasil dihapus'
+            ]);
+        }
+
+        return redirect()->route('kategori.index')
+            ->with('success', 'Kategori berhasil dihapus');
     }
 }

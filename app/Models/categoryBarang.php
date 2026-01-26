@@ -9,7 +9,7 @@ class CategoryBarang extends Model
 {
     use SoftDeletes; // Untuk support deleted_at
 
-    protected $table = 'category_barang';
+    protected $table = 'category_barangs';
     protected $fillable = [
         'nama_kategori',
     ];

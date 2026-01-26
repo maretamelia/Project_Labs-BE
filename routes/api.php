@@ -36,23 +36,23 @@ Route::middleware('auth')->group(function () {
 });
 /* 🔽 ROUTE ADMIN DI SINI */
 
-    Route::prefix('admin')->group(function() {
-    // kategori
-    Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
-    Route::get('/kategori/create', [KategoriController::class, 'create'])->name('kategori.create');
-    Route::post('/kategori', [KategoriController::class, 'store'])->name('kategori.store');
-    Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
-    Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
-    Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
-    // Barang
-    Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
-    Route::get('/barang/create', [BarangController::class, 'create'])->name('barang.create');
-    Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');
-    Route::get('/barang/{barang}/edit', [BarangController::class, 'edit'])->name('barang.edit');
-    Route::put('/barang/{barang}', [BarangController::class, 'update'])->name('barang.update');
-    Route::delete('/barang/{barang}', [BarangController::class, 'destroy'])->name('barang.destroy');
-    Route::get('/barang/{barang}', [BarangController::class, 'show'])->name('barang.show');
+Route::prefix('admin')->group(function () {
+    // KATEGORI (CRUD API)
+    Route::get('/kategori', [KategoriController::class, 'index']);
+    Route::post('/kategori', [KategoriController::class, 'store']);
+    Route::get('/kategori/{kategori}', [KategoriController::class, 'show']);
+    Route::put('/kategori/{kategori}', [KategoriController::class, 'update']);
+    Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy']);
+
+    // BARANG (CRUD API)
+    Route::get('/barang', [BarangController::class, 'apiIndex']); // semua barang
+    Route::get('/barang/{barang}', [BarangController::class, 'apiShow']); // detail barang
+    Route::post('/barang', [BarangController::class, 'apiStore']); // tambah barang
+    Route::put('/barang/{barang}', [BarangController::class, 'apiUpdate']); // update barang
+    Route::delete('/barang/{barang}', [BarangController::class, 'apiDestroy']); // hapus barang
 });
+
+
 
 // ROUTE USER 
 

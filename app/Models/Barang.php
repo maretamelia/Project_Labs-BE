@@ -21,10 +21,11 @@ class Barang extends Model
         'deskripsi'
     ];
 
-    public function category()
-    {
-        return $this->belongsTo(CategoryBarang::class, 'category_id');
-    }
+   // Relasi ke kategori
+public function kategori()
+{
+    return $this->belongsTo(CategoryBarang::class, 'category_id');
+}
 
     public function peminjamans()
     {
