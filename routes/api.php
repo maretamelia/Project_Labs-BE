@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\PeminjamanUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\UserAuthController; // optional, kalau mau register API
+use App\Http\Controllers\Auth\UserAuthController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 
@@ -21,6 +22,15 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('a
 
 // ================= LOGOUT =================
 Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');
+
+// ================= Admin =================
+
+Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+    Route::post('/peminjaman/{peminjaman}/approve', [AdminController::class, 'approvePeminjaman']);
+    Route::post('/peminjaman/{peminjaman}/reject', [AdminController::class, 'rejectPeminjaman']);
+});
+
+
 
 // ================= USER PEMINJAMAN =================
 Route::middleware('auth:sanctum')->prefix('user')->group(function () {
