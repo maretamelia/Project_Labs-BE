@@ -10,23 +10,26 @@ class Peminjaman extends Model
     use HasFactory;
 
     protected $table = 'peminjamans';
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'nama_barang',
+        'kategori',
+        'jumlah',
+        'tanggal_pinjam',
+        'tanggal_kembali',
+        'status',
+        'keterangan',
+    ];
 
-    // Relasi ke user
+    // relasi ke user
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke barang
-    public function barang()
+    // relasi ke kategori_barangs
+    public function kategoriBarang()
     {
-        return $this->belongsTo(Barang::class);
-    }
-
-    // Contoh fungsi helper
-    public function isOverdue()
-    {
-        return $this->tanggal_kembali < now();
+        return $this->hasOne(categoryBarang::class, 'nama_kategori', 'kategori');
     }
 }

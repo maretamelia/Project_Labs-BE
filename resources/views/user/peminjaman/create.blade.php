@@ -1,39 +1,75 @@
 @extends('layouts.admin')
 
 @section('content')
-<h1>Ajukan Peminjaman</h1>
+<div class="container">
+    <h2>Ajukan Peminjaman</h2>
 
-@if($errors->any())
-    <div style="color:red">
-        <ul>
-            @foreach($errors->all() as $err)
-                <li>{{ $err }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+    {{-- Menampilkan error validasi --}}
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-<!-- form peminjaman -->
-<form action="{{ route('user.peminjaman.store') }}" method="POST">
+    <form action="/api/user/peminjaman" method="POST">
     @csrf
-    <label>Barang:</label>
-    <select name="barang_id">
-        @foreach($barangs as $barang)
-            <option value="{{ $barang->id }}">{{ $barang->nama }} (stok: {{ $barang->stok }})</option>
-        @endforeach
-    </select>
+        @csrf
 
-    <label>Jumlah:</label>
-    <input type="number" name="jumlah" value="{{ old('jumlah') }}" />
+        {{-- Kategori Barang --}}
+        <div class="mb-3">
+            <label for="kategori" class="form-label">Kategori Barang</label>
+            <select name="kategori" class="form-control" required>
+                <option value="">-- Pilih Kategori --</option>
+                @foreach($kategoris as $kategori)
+                    <option value="{{ $kategori->kategori }}" {{ old('kategori') == $kategori->kategori ? 'selected' : '' }}>
+                        {{ $kategori->kategori }}
+                    </option>
+                @endforeach
+            </select>
 
-    <label>Tanggal Pinjam:</label>
-    <input type="date" name="tanggal_pinjam" value="{{ old('tanggal_pinjam') }}" />
+        </div>
 
-    <label>Tanggal Kembali:</label>
-    <input type="date" name="tanggal_kembali" value="{{ old('tanggal_kembali') }}" />
+        {{-- Nama Barang --}}
+        <div class="mb-3">
+            <label for="nama_barang" class="form-label">Nama Barang</label>
+            <input type="text" id="nama_barang" name="nama_barang" class="form-control" 
+                value="{{ old('nama_barang') }}" placeholder="Isi nama barang" required>
+        </div>
 
-    <label>Keterangan:</label>
-    <textarea name="keterangan">{{ old('keterangan') }}</textarea>
+        {{-- Jumlah --}}
+        <div class="mb-3">
+            <label for="jumlah" class="form-label">Jumlah</label>
+            <input type="number" id="jumlah" name="jumlah" class="form-control" 
+                value="{{ old('jumlah') }}" min="1" required>
+        </div>
 
-    <button type="submit">Ajukan Peminjaman</button>
-</form>
+        {{-- Tanggal Pinjam --}}
+        <div class="mb-3">
+            <label for="tanggal_pinjam" class="form-label">Tanggal Pinjam</label>
+            <input type="date" id="tanggal_pinjam" name="tanggal_pinjam" class="form-control" 
+                value="{{ old('tanggal_pinjam') }}" required>
+        </div>
+
+        {{-- Tanggal Kembali --}}
+        <div class="mb-3">
+            <label for="tanggal_kembali" class="form-label">Tanggal Kembali</label>
+            <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control" 
+                value="{{ old('tanggal_kembali') }}" 
+                min="{{ old('tanggal_pinjam', date('Y-m-d')) }}">
+        </div>
+
+        {{-- Keterangan --}}
+        <div class="mb-3">
+            <label for="keterangan" class="form-label">Keterangan</label>
+            <textarea id="keterangan" name="keterangan" class="form-control" rows="3">{{ old('keterangan') }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Simpan</button>
+        <a href="{{ route('user.peminjaman.index') }}" class="btn btn-secondary">Batal</a>
+    </form>
+</div>
+@endsection

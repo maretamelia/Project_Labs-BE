@@ -11,13 +11,12 @@ class CategoryBarang extends Model
 
     protected $table = 'category_barangs';
     protected $fillable = [
-        'nama_kategori',
+        'kategori',
     ];
 
     // Relasi ke tabel barangs
     public function barangs()
     {
-        return $this->hasMany(Barang::class, 'category_id'); 
-        // pastikan 'category_id' ada di tabel barangs sebagai foreign key
+        return $this->hasMany(Barang::class, 'kategori'); 
     }
 }

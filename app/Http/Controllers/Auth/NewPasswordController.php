@@ -3,55 +3,53 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
-use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
     /**
-     * Display the password reset view.
+     * Display reset password form (web only)
      */
-    public function create(Request $request): View
+    public function create(Request $request)
     {
-        return view('auth.reset-password', ['request' => $request]);
+        // Kalau web, return view
+        return view('auth.reset-password', [
+            'request' => $request
+        ]);
     }
 
     /**
-     * Handle an incoming new password request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * Handle reset password (web or API)
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => ['required', 'confirmed'],
-    ]);
+    {
+        $request->validate([
+            'token' => ['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required', 'confirmed', 'min:8'],
+        ]);
 
-    $status = Password::reset(
-        $request->only('email', 'password', 'password_confirmation', 'token'),
-        function ($user, $password) {
-            $user->forceFill([
-                'password' => Hash::make($password),
-                'remember_token' => Str::random(60),
-            ])->save();
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+            }
+        );
 
-            event(new PasswordReset($user));
+        if ($request->wantsJson()) {
+            return $status == Password::PASSWORD_RESET
+                ? response()->json(['success' => true, 'message' => __($status)])
+                : response()->json(['success' => false, 'message' => __($status)], 422);
         }
-    );
 
-    // Pastikan return JSON, tidak redirect
-    return response()->json([
-        'message' => $status == Password::PASSWORD_RESET
-            ? 'Password berhasil di-reset'
-            : 'Reset password gagal: ' . __($status)
-    ], $status == Password::PASSWORD_RESET ? 200 : 400);
-}
+        // Web redirect
+        return $status == Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withInput($request->only('email'))
+                  ->withErrors(['email' => __($status)]);
+    }
 }
