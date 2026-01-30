@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Admin\PeminjamanAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,14 @@ Route::middleware('auth')->group(function () {
             Route::delete('/{peminjaman}', [PeminjamanUserController::class, 'destroy'])->name('destroy');
         });
     });
+});
+
+// ================= ADMIN PEMINJAMAN =================
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/peminjaman', [PeminjamanAdminController::class, 'daftarPeminjaman'])->name('peminjaman.daftar');
+    Route::get('/peminjaman/riwayat', [PeminjamanAdminController::class, 'riwayatPeminjaman'])->name('peminjaman.riwayat');
+    Route::post('/peminjaman/{peminjaman}/approve', [PeminjamanAdminController::class, 'approvePeminjaman'])->name('peminjaman.approve');
+    Route::post('/peminjaman/{peminjaman}/reject', [PeminjamanAdminController::class, 'rejectPeminjaman'])->name('peminjaman.reject');
 });
 
 Route::get('/debug-reset', function () {

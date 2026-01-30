@@ -1,0 +1,47 @@
+@extends('layouts.admin')
+
+@section('content')
+<h1>Daftar Peminjaman</h1>
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>No</th>
+            <th>Nama User</th>
+            <th>Nama Barang</th>
+            <th>Jumlah</th>
+            <th>Tanggal Pinjam</th>
+            <th>Tanggal Kembali</th>
+            <th>Status</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($peminjamans as $index => $p)
+        <tr>
+            <td>{{ $index + 1 }}</td>
+            <td>{{ $p->user->name }}</td>
+            <td>{{ $p->nama_barang }}</td>
+            <td>{{ $p->jumlah }}</td>
+            <td>{{ $p->tanggal_pinjam }}</td>
+            <td>{{ $p->tanggal_kembali }}</td>
+            <td>{{ $p->status }}</td>
+            <td>
+                @if(in_array($p->status, ['peminjaman', 'pengembalian']))
+                    <form action="{{ route('admin.peminjaman.approve', $p->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit">Terima</button>
+                    </form>
+                    <form action="{{ route('admin.peminjaman.reject', $p->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        <button type="submit">Tolak</button>
+                    </form>
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+@endsection
