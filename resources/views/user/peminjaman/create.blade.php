@@ -2,74 +2,79 @@
 
 @section('content')
 <div class="container">
-    <h2>Ajukan Peminjaman</h2>
+    <h4 class="mb-4">Pilih Barang</h4>
 
-    {{-- Menampilkan error validasi --}}
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+    <form action="{{ route('user.peminjaman.form') }}" method="GET">
+        <div class="row g-4">
+            @foreach ($barang as $b)
+                <div class="col-md-4">
+                    <label class="w-100">
+                        <input
+                            type="radio"
+                            name="barang_id"
+                            value="{{ $b->id }}"
+                            class="d-none"
+                            {{ $b->stok <= 0 ? 'disabled' : '' }}
+                            required
+                        >
 
-    <form action="/api/user/peminjaman" method="POST">
-    @csrf
-        @csrf
+                        <div class="card barang-card {{ $b->stok <= 0 ? 'stok-habis' : '' }}">
+                            @if ($b->image)
+                                <img
+                                    src="{{ asset('storage/' . $b->image) }}"
+                                    class="card-img-top"
+                                    style="height:180px; object-fit:cover"
+                                >
+                            @else
+                                <div class="bg-light text-center py-5">
+                                    No Image
+                                </div>
+                            @endif
 
-        {{-- Kategori Barang --}}
-        <div class="mb-3">
-            <label for="kategori" class="form-label">Kategori Barang</label>
-            <select name="kategori" class="form-control" required>
-                <option value="">-- Pilih Kategori --</option>
-                @foreach($kategoris as $kategori)
-                    <option value="{{ $kategori->kategori }}" {{ old('kategori') == $kategori->kategori ? 'selected' : '' }}>
-                        {{ $kategori->kategori }}
-                    </option>
-                @endforeach
-            </select>
+                            <div class="card-body">
+                                <h5>{{ $b->nama_barang }}</h5>
+                                <small>
+                                    Kategori: {{ $b->kategori?->kategori ?? '-' }}
+                                </small>
+                                <br>
 
-        </div>
-
-        {{-- Nama Barang --}}
-        <div class="mb-3">
-            <label for="nama_barang" class="form-label">Nama Barang</label>
-            <input type="text" id="nama_barang" name="nama_barang" class="form-control" 
-                value="{{ old('nama_barang') }}" placeholder="Isi nama barang" required>
-        </div>
-
-        {{-- Jumlah --}}
-        <div class="mb-3">
-            <label for="jumlah" class="form-label">Jumlah</label>
-            <input type="number" id="jumlah" name="jumlah" class="form-control" 
-                value="{{ old('jumlah') }}" min="1" required>
-        </div>
-
-        {{-- Tanggal Pinjam --}}
-        <div class="mb-3">
-            <label for="tanggal_pinjam" class="form-label">Tanggal Pinjam</label>
-            <input type="date" id="tanggal_pinjam" name="tanggal_pinjam" class="form-control" 
-                value="{{ old('tanggal_pinjam') }}" required>
-        </div>
-
-        {{-- Tanggal Kembali --}}
-        <div class="mb-3">
-            <label for="tanggal_kembali" class="form-label">Tanggal Kembali</label>
-            <input type="date" id="tanggal_kembali" name="tanggal_kembali" class="form-control" 
-                value="{{ old('tanggal_kembali') }}" 
-                min="{{ old('tanggal_pinjam', date('Y-m-d')) }}">
+                                @if ($b->stok > 0)
+                                    <span class="badge bg-success">
+                                        Stok {{ $b->stok }}
+                                    </span>
+                                @else
+                                    <span class="badge bg-danger">
+                                        Stok Habis
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            @endforeach
         </div>
 
-        {{-- Keterangan --}}
-        <div class="mb-3">
-            <label for="keterangan" class="form-label">Keterangan</label>
-            <textarea id="keterangan" name="keterangan" class="form-control" rows="3">{{ old('keterangan') }}</textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Simpan</button>
-        <a href="{{ route('user.peminjaman.index') }}" class="btn btn-secondary">Batal</a>
+        <button class="btn btn-primary mt-4">
+            Next →
+        </button>
     </form>
 </div>
+
+<style>
+.barang-card {
+    cursor: pointer;
+    transition: .2s;
+    border: 2px solid transparent;
+}
+.barang-card:hover {
+    transform: translateY(-4px);
+}
+input[type="radio"]:checked + .barang-card {
+    border-color: #0d6efd;
+}
+.stok-habis {
+    opacity: .5;
+    pointer-events: none;
+}
+</style>
 @endsection

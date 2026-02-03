@@ -20,14 +20,14 @@
         @foreach($peminjamans as $index => $p)
         <tr>
             <td>{{ $index + 1 }}</td>
-            <td>{{ $p->user->name }}</td>
-            <td>{{ $p->nama_barang }}</td>
-            <td>{{ $p->jumlah }}</td>
-            <td>{{ $p->tanggal_pinjam }}</td>
-            <td>{{ $p->tanggal_kembali }}</td>
-            <td>{{ $p->status }}</td>
+            <td>{{ $p->user->name ?? '-' }}</td>
+            <td>{{ $p->barang->nama_barang ?? '-' }}</td>
+            <td>{{ $p->jumlah_pinjam }}</td>
+            <td>{{ $p->tanggal_peminjaman ? $p->tanggal_peminjaman->format('d M Y') : '-' }}</td>
+            <td>{{ $p->tanggal_pengembalian ? $p->tanggal_pengembalian->format('d M Y') : '-' }}</td>
+            <td>{{ ucfirst($p->status) }}</td>
             <td>
-                @if(in_array($p->status, ['peminjaman', 'pengembalian']))
+                @if(in_array($p->status, ['pending', 'peminjaman', 'pengembalian']))
                     <form action="{{ route('admin.peminjaman.approve', $p->id) }}" method="POST" style="display:inline;">
                         @csrf
                         <button type="submit">Terima</button>
@@ -36,6 +36,9 @@
                         @csrf
                         <button type="submit">Tolak</button>
                     </form>
+                
+                 @elseif($p->status === 'disetujui') <!-- status sudah disetujui -->
+                <a href="{{ route('admin.peminjaman.show', $p->id) }}">Lihat Detail</a>
                 @else
                     -
                 @endif

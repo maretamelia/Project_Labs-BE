@@ -7,14 +7,18 @@ use App\Models\Barang;
 
 class BarangUserController extends Controller
 {
+    // Tampilkan semua barang untuk user
     public function index()
     {
-        $barangs = Barang::with('category')->get();
-        return view('user.barangs.index', compact('barangs'));
+        // Ambil semua barang + relasi kategori
+        $barang = Barang::with('kategori')->get();
+        return view('user.barang.index', compact('barang'));
     }
 
     public function show(Barang $barang)
-    {
-        return view('user.barangs.show', compact('barang'));
-    }
+{
+    $barang->load('kategori'); // pastikan kategori ikut muncul
+    return view('user.barang.show', compact('barang'));
+}
+
 }

@@ -30,6 +30,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/peminjaman/{peminjaman}/reject', [AdminController::class, 'rejectPeminjaman']);
 });
 
+ // API CRUD (jika diperlukan)
+ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/api/barang', [\App\Http\Controllers\Admin\BarangController::class, 'apiIndex']);
+    Route::get('/api/barang/{barang}', [\App\Http\Controllers\Admin\BarangController::class, 'apiShow']);
+    Route::post('/api/barang', [\App\Http\Controllers\Admin\BarangController::class, 'apiStore']);
+    Route::put('/api/barang/{barang}', [\App\Http\Controllers\Admin\BarangController::class, 'apiUpdate']);
+    Route::delete('/api/barang/{barang}', [\App\Http\Controllers\Admin\BarangController::class, 'apiDestroy']);
+});
+
 
 
 // ================= USER PEMINJAMAN =================

@@ -2,62 +2,59 @@
 
 @section('content')
 <div class="container">
-    <h2>Edit Peminjaman</h2>
+    <h4 class="mb-4">Edit Peminjaman</h4>
 
-    {{-- Error --}}
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-        </div>
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
     <form action="{{ route('user.peminjaman.update', $peminjaman->id) }}" method="POST">
         @csrf
         @method('PUT')
 
+        <!-- Pilih Barang -->
         <div class="mb-3">
-            <label>Kategori Barang</label>
-            <select name="kategori_id" class="form-control" required>
-                <option value="">-- pilih kategori --</option>
-                @foreach($kategoris as $kategori)
-                    <option value="{{ $kategori->id }}" {{ $peminjaman->barang->kategori_id == $kategori->id ? 'selected' : '' }}>
-                        {{ $kategori->nama }}
+            <label for="barang_id">Barang</label>
+            <select name="barang_id" id="barang_id" class="form-control">
+                @foreach($barang as $b)
+                    <option value="{{ $b->id }}" {{ $b->id == $peminjaman->barang_id ? 'selected' : '' }}>
+                        {{ $b->nama_barang }} ({{ $b->kategori->kategori ?? '-' }})
                     </option>
                 @endforeach
             </select>
         </div>
 
+        <!-- Jumlah Pinjam -->
         <div class="mb-3">
-            <label>Nama Barang</label>
-            <input type="text" name="nama_barang" class="form-control" value="{{ $peminjaman->barang->nama }}" required>
+            <label for="jumlah_pinjam">Jumlah</label>
+            <input type="number" name="jumlah_pinjam" id="jumlah_pinjam" class="form-control"
+                   value="{{ $peminjaman->jumlah_pinjam }}" min="1">
         </div>
 
+        <!-- Tanggal Pinjam -->
         <div class="mb-3">
-            <label>Jumlah</label>
-            <input type="number" name="jumlah" class="form-control" value="{{ $peminjaman->jumlah }}" min="1" required>
+            <label for="tanggal_peminjaman">Tanggal Peminjaman</label>
+            <input type="date" name="tanggal_peminjaman" id="tanggal_peminjaman" class="form-control"
+                   value="{{ $peminjaman->tanggal_peminjaman?->format('Y-m-d') }}">
         </div>
 
+        <!-- Tanggal Pengembalian -->
         <div class="mb-3">
-            <label>Tanggal Pinjam</label>
-            <input type="date" name="tanggal_pinjam" class="form-control" value="{{ $peminjaman->tanggal_pinjam }}" required>
+            <label for="tanggal_pengembalian">Tanggal Pengembalian</label>
+            <input type="date" name="tanggal_pengembalian" id="tanggal_pengembalian" class="form-control"
+                   value="{{ $peminjaman->tanggal_pengembalian?->format('Y-m-d') }}">
         </div>
 
+        <!-- Deskripsi -->
         <div class="mb-3">
-            <label>Tanggal Kembali</label>
-            <input type="date" name="tanggal_kembali" class="form-control" value="{{ $peminjaman->tanggal_kembali }}">
+            <label for="keterangan">Keterangan</label>
+            <textarea name="keterangan" id="keterangan" class="form-control">{{ $peminjaman->keterangan }}</textarea>
         </div>
 
-        <div class="mb-3">
-            <label>Keterangan</label>
-            <textarea name="keterangan" class="form-control">{{ $peminjaman->keterangan }}</textarea>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('user.peminjaman.index') }}" class="btn btn-secondary">Batal</a>
+        <button type="submit" class="btn btn-primary">Update Peminjaman</button>
     </form>
 </div>
 @endsection

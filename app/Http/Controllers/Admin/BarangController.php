@@ -37,7 +37,6 @@ class BarangController extends Controller
             'kode_barang' => 'required|string|max:100',
             'deskripsi'   => 'nullable|string',
             'stok'        => 'required|integer',
-            'harga'       => 'required|numeric',
             'image'       => 'nullable|image|max:2048', // maksimal 2MB
         ]);
 
@@ -48,7 +47,7 @@ class BarangController extends Controller
 
         $barang = Barang::create($data);
 
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan');
+        return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil ditambahkan');
     }
 
     // Form edit barang (web)
@@ -79,7 +78,7 @@ class BarangController extends Controller
 
         $barang->update($data);
 
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil diubah');
+        return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil diubah');
     }
 
     // Hapus barang (web)
@@ -90,7 +89,7 @@ class BarangController extends Controller
         }
 
         $barang->delete();
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus');
+        return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil dihapus');
     }
 
     // Tampilkan detail barang (web)

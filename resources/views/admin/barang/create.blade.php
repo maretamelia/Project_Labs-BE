@@ -14,7 +14,7 @@
 @endif
 
 <!-- Tambahkan enctype="multipart/form-data" supaya bisa upload file -->
-<form action="{{ route('barang.store') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('admin.barang.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
     <label>Nama Barang:</label><br>
@@ -45,5 +45,5 @@
     <button type="submit">Simpan</button>
 </form>
 
-<a href="{{ route('barang.index') }}">Kembali</a>
+<a href="{{ route('admin.barang.index') }}">Kembali</a>
 @endsection

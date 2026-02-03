@@ -24,9 +24,11 @@ class Barang extends Model
    // Relasi ke kategori
 public function kategori()
 {
-    return $this->belongsTo(CategoryBarang::class, 'category_id');
+    return $this->belongsTo(CategoryBarang::class, 'category_id')
+                ->withTrashed(); // ⬅️ PENTING
 }
 
+// Relasi ke barang
     public function peminjamans()
     {
         return $this->hasMany(Peminjaman::class, 'barang_id');

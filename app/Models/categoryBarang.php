@@ -16,7 +16,8 @@ class CategoryBarang extends Model
 
     // Relasi ke tabel barangs
     public function barangs()
-    {
-        return $this->hasMany(Barang::class, 'kategori'); 
-    }
+{
+    return $this->hasMany(Barang::class, 'category_id');
+}
+
 }

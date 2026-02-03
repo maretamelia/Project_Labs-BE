@@ -7,7 +7,7 @@
     <div style="color:green">{{ session('success') }}</div>
 @endif
 
-<a href="{{ route('barang.create') }}">+ Tambah Barang</a>
+<a href="{{ route('admin.barang.create') }}">+ Tambah Barang</a>
 
 <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:20px;">
     @foreach($barang as $b)
@@ -23,13 +23,13 @@
             <p><strong>Kategori:</strong> {{ $b->kategori->nama_kategori ?? '-' }}</p>
             <p><strong>Stok:</strong> {{ $b->stok }}</p>
 
-            <a href="{{ route('barang.edit', $b->id) }}">Edit</a> |
-            <form action="{{ route('barang.destroy', $b->id) }}" method="POST" style="display:inline;">
+            <a href="{{ route('admin.barang.edit', $b->id) }}">Edit</a> |
+            <form action="{{ route('admin.barang.destroy', $b->id) }}" method="POST" style="display:inline;">
                 @csrf
                 @method('DELETE')
                 <button type="submit" onclick="return confirm('Yakin hapus barang ini?')">Hapus</button>
             </form> |
-            <a href="{{ route('barang.show', $b->id) }}">Detail</a>
+            <a href="{{ route('admin.barang.show', $b->id) }}">Detail</a>
         </div>
     @endforeach
 </div>

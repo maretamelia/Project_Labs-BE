@@ -3,156 +3,191 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Peminjaman;
 use App\Models\Barang;
-use App\Models\CategoryBarang;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PeminjamanUserController extends Controller
 {
-    // ====== BLADE ======
+    // =========================
+    // LIST PEMINJAMAN USER
+    // =========================
     public function index()
     {
-        $peminjamans = Peminjaman::with('barang.kategori')
+        $peminjamans = Peminjaman::with(['barang.kategori'])
             ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10); // untuk pagination
+            ->latest()
+            ->get();
 
         return view('user.peminjaman.index', compact('peminjamans'));
     }
 
+    // =========================
+    // PILIH BARANG
+    // =========================
     public function create()
     {
-        $kategoris = CategoryBarang::all(); // ambil semua kategori
-        return view('user.peminjaman.create', compact('kategoris'));
+        $barang = Barang::with('kategori')->get();
+        return view('user.peminjaman.create', compact('barang'));
     }
 
+    // =========================
+    // FORM PEMINJAMAN
+    // =========================
+    public function form(Request $request)
+    {
+        $request->validate([
+            'barang_id' => 'required|exists:barangs,id'
+        ]);
+
+        $barang = Barang::with('kategori')->findOrFail($request->barang_id);
+
+        return view('user.peminjaman.form', compact('barang'));
+    }
+
+    // =========================
+    // SIMPAN PEMINJAMAN
+    // =========================
+    public function store(Request $request)
+    {
+        $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+            'jumlah_pinjam' => 'required|integer|min:1',
+            'tanggal_peminjaman' => 'required|date',
+            'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $barang = Barang::findOrFail($request->barang_id);
+
+        // CEK STOK
+        if ($barang->stok < $request->jumlah_pinjam) {
+            return back()->with('error', 'Stok barang tidak mencukupi');
+        }
+
+        // SIMPAN PEMINJAMAN
+        Peminjaman::create([
+            'user_id' => Auth::id(),
+            'barang_id' => $barang->id,
+            'jumlah_pinjam' => $request->jumlah_pinjam,
+            'tanggal_peminjaman' => $request->tanggal_peminjaman,
+            'tanggal_pengembalian' => $request->tanggal_pengembalian,
+            'keetrangan' => $request->deskripsi,
+            'status' => 'pending',
+        ]);
+
+        // KURANGI STOK
+        $barang->decrement('stok', $request->jumlah_pinjam);
+
+        return redirect()->route('user.peminjaman.index')
+                         ->with('success', 'Peminjaman berhasil diajukan');
+    }
+
+    // =========================
+    // DETAIL PEMINJAMAN
+    // =========================
+    public function show(Peminjaman $peminjaman)
+    {
+        abort_if($peminjaman->user_id !== Auth::id(), 403);
+        $peminjaman->load(['barang.kategori']);
+        return view('user.peminjaman.show', compact('peminjaman'));
+    }
+
+    // =========================
+    // EDIT PEMINJAMAN
+    // =========================
     public function edit(Peminjaman $peminjaman)
     {
         abort_if($peminjaman->user_id !== Auth::id(), 403);
-        abort_if($peminjaman->status !== 'menunggu', 403, 'Peminjaman sudah diproses');
-
-        $kategoris = CategoryBarang::all();
-        return view('user.peminjaman.edit', compact('peminjaman', 'kategoris'));
+        $barang = Barang::with('kategori')->get();
+        return view('user.peminjaman.edit', compact('peminjaman', 'barang'));
     }
 
-    public function store(Request $request)
-    {
-        return $this->savePeminjaman($request);
-    }
-
+    // =========================
+    // UPDATE PEMINJAMAN
+    // =========================
     public function update(Request $request, Peminjaman $peminjaman)
     {
         abort_if($peminjaman->user_id !== Auth::id(), 403);
-        abort_if($peminjaman->status !== 'menunggu', 403, 'Peminjaman sudah diproses');
 
-        return $this->savePeminjaman($request, $peminjaman);
+        $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+            'jumlah_pinjam' => 'required|integer|min:1',
+            'tanggal_peminjaman' => 'required|date',
+            'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $barang = Barang::findOrFail($request->barang_id);
+
+        // HITUNG PERBEDAAN JUMLAH PINJAM UNTUK UPDATE STOK
+        $selisih = $request->jumlah_pinjam - $peminjaman->jumlah_pinjam;
+
+        if ($selisih > 0 && $barang->stok < $selisih) {
+            return back()->with('error', 'Stok barang tidak mencukupi untuk menambah jumlah pinjam');
+        }
+
+        // UPDATE PEMINJAMAN
+        $peminjaman->update([
+            'barang_id' => $barang->id,
+            'jumlah_pinjam' => $request->jumlah_pinjam,
+            'tanggal_peminjaman' => $request->tanggal_peminjaman,
+            'tanggal_pengembalian' => $request->tanggal_pengembalian,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        // UPDATE STOK
+        $barang->decrement('stok', max($selisih, 0));
+        if ($selisih < 0) {
+            $barang->increment('stok', abs($selisih));
+        }
+
+        return redirect()->route('user.peminjaman.index')
+                         ->with('success', 'Peminjaman berhasil diperbarui');
     }
 
+    // =========================
+    // RETURN / PENGEMBALIAN
+    // =========================
+    public function return(Peminjaman $peminjaman)
+    {
+        abort_if($peminjaman->user_id !== Auth::id(), 403);
+
+        $today = \Carbon\Carbon::today();
+        if ($today < $peminjaman->tanggal_pengembalian) {
+            return back()->with('error', 'Belum waktunya pengembalian');
+        }
+
+        // KEMBALIKAN STOK
+        $barang = $peminjaman->barang;
+        $barang->increment('stok', $peminjaman->jumlah_pinjam);
+
+        $peminjaman->status = 'dikembalikan';
+        $peminjaman->save();
+
+        return redirect()->route('user.peminjaman.index')->with('success', 'Barang berhasil dikembalikan');
+    }
+
+    // =========================
+    // HAPUS PEMINJAMAN
+    // =========================
     public function destroy(Peminjaman $peminjaman)
     {
         abort_if($peminjaman->user_id !== Auth::id(), 403);
-        abort_if($peminjaman->status !== 'menunggu', 403, 'Peminjaman sudah diproses');
 
-        $peminjaman->delete();
-
-        return redirect()
-            ->route('user.peminjaman.index')
-            ->with('success', 'Peminjaman berhasil dibatalkan');
-    }
-
-    // ====== API ======
-    public function apiIndex()
-    {
-        $data = Peminjaman::where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json(['success' => true, 'data' => $data]);
-    }
-
-    public function apiShow(Peminjaman $peminjaman)
-    {
-        abort_if($peminjaman->user_id !== Auth::id(), 403);
-
-        return response()->json(['success' => true, 'data' => $peminjaman]);
-    }
-
-    public function apiStore(Request $request)
-    {
-        $peminjaman = $this->savePeminjaman($request, null, true);
-        return response()->json(['success' => true, 'data' => $peminjaman], 201);
-    }
-
-    public function apiUpdate(Request $request, Peminjaman $peminjaman)
-    {
-        abort_if($peminjaman->user_id !== Auth::id(), 403);
-        abort_if($peminjaman->status !== 'menunggu', 403, 'Peminjaman sudah diproses');
-
-        $peminjaman = $this->savePeminjaman($request, $peminjaman, true);
-        return response()->json(['success' => true, 'data' => $peminjaman]);
-    }
-
-    public function apiDestroy(Peminjaman $peminjaman)
-    {
-        abort_if($peminjaman->user_id !== Auth::id(), 403);
-        abort_if($peminjaman->status !== 'menunggu', 403, 'Peminjaman sudah diproses');
-
-        $peminjaman->delete();
-        return response()->json(['success' => true, 'message' => 'Peminjaman berhasil dibatalkan']);
-    }
-
-    // ====== PRIVATE FUNCTION ======
-    private function savePeminjaman(Request $request, Peminjaman $peminjaman = null, $isApi = false)
-    {
-        // VALIDASI REQUEST
-        $request->validate([
-            'kategori'        => 'required|string',
-            'nama_barang'     => 'required|string|max:255',
-            'jumlah'          => 'required|numeric|min:1',
-            'tanggal_pinjam'  => 'required|date',
-            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_pinjam',
-            'keterangan'      => 'nullable|string',
-        ]);
-
-        // // AMBIL KATEGORI BERDASARKAN NAMA
-        // $kategori = CategoryBarang::where('kategori', $request->kategori)->first();
-
-        // // BUAT BARANG BARU DENGAN NAMA BARANG DARI USER
-        // $barang = Barang::firstOrCreate(
-        //     [
-        //         'nama' => $request->nama_barang,
-        //         'kategori' => $request->kategori,
-        //     ],
-        //     ['stok' => 0] // stok awal 0 jika baru dibuat
-        // );
-
-        // // CEK STOK
-        // if (!$barang->wasRecentlyCreated && $request->jumlah > $barang->stok) {
-        //     $message = ['jumlah' => 'Jumlah melebihi stok barang'];
-        //     if ($isApi) return response()->json(['success' => false, 'errors' => $message], 422);
-        //     return back()->withErrors($message)->withInput();
-        // }
-
-        // DATA PEMINJAMAN
-        $data = [
-            'user_id'         => Auth::id(),
-            'nama_barang'       => $request->nama_barang,
-            'jumlah'          =>             $request->jumlah,
-            'kategori'        => $request->kategori,
-            'tanggal_pinjam'  => $request->tanggal_pinjam,
-            'tanggal_kembali' => $request->tanggal_kembali,
-            'keterangan'      => $request->keterangan,
-            'status'          => 'menunggu',
-        ];
-
-        if ($peminjaman) {
-            $peminjaman->update($data);
-        } else {
-            $peminjaman = Peminjaman::create($data);
+        if ($peminjaman->status !== 'pending') {
+            return redirect()->route('user.peminjaman.index')
+                ->with('error', 'Hanya peminjaman yang pending yang bisa dibatalkan.');
         }
 
-        return $peminjaman;
+        // KEMBALIKAN STOK jika dibatalkan
+        $barang = $peminjaman->barang;
+        $barang->increment('stok', $peminjaman->jumlah_pinjam);
+
+        $peminjaman->delete();
+
+        return redirect()->route('user.peminjaman.index')
+            ->with('success', 'Peminjaman berhasil dibatalkan.');
     }
 }

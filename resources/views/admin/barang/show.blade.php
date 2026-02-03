@@ -19,5 +19,5 @@
 </div>
 
 <br>
-<a href="{{ route('barang.index') }}">Kembali ke Daftar Barang</a>
+<a href="{{ route('admin.barang.index') }}">Kembali ke Daftar Barang</a>
 @endsection
