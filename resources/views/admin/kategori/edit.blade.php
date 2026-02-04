@@ -14,7 +14,7 @@
 @endif
 
 <!-- Form edit kategori -->
-<form action="{{ route('kategori.update', $kategori) }}" method="POST">
+<form action="{{ route('admin.kategori.update', $kategori) }}" method="POST">
     @csrf
     @method('PUT')
     <label>Nama Kategori</label>
@@ -23,5 +23,5 @@
 </form>
 
 <!-- Tombol kembali -->
-<a href="{{ route('kategori.index') }}">Kembali</a>
+<a href="{{ route('admin.kategori.index') }}">Kembali</a>
 @endsection

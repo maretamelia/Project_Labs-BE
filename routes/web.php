@@ -10,6 +10,8 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\BarangController;
+use App\Http\Controllers\Admin\KategoriController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -87,7 +89,16 @@ Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
 // ================= ADMIN ROUTES =================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     
-    // ADMIN - BARANG
+    
+// ADMIN - KATEGORI
+    Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
+    Route::get('/kategori/create', [KategoriController::class, 'create'])->name('kategori.create');
+    Route::post('/kategori', [KategoriController::class, 'store'])->name('kategori.store');
+    Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])->name('kategori.edit');
+    Route::put('/kategori/{kategori}', [KategoriController::class, 'update'])->name('kategori.update');
+    Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
+    Route::get('/kategori/{kategori}', [KategoriController::class, 'show'])->name('kategori.show');
+// ADMIN - BARANG
     Route::get('/barang', [BarangController::class, 'index'])->name('barang.index');
     Route::get('/barang/create', [BarangController::class, 'create'])->name('barang.create');
     Route::post('/barang', [BarangController::class, 'store'])->name('barang.store');

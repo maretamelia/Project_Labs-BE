@@ -4,7 +4,7 @@
 <h1>Daftar Kategori Barang</h1>
 
 <!-- Tombol tambah kategori -->
-<a href="{{ route('kategori.create') }}">+ Tambah Kategori</a>
+<a href="{{ route('admin.kategori.create') }}">+ Tambah Kategori</a>
 
 <!-- Pesan sukses setelah tambah / edit / hapus -->
 @if(session('success'))
@@ -18,9 +18,9 @@
             <li>
                 {{ $k->nama_kategori }}
                 <!-- Tombol edit -->
-                <a href="{{ route('kategori.edit', $k) }}">Edit</a>
+                <a href="{{ route('admin.kategori.edit', $k) }}">Edit</a>
                 <!-- Tombol hapus -->
-                <form action="{{ route('kategori.destroy', $k) }}" method="POST" style="display:inline">
+                <form action="{{ route('admin.kategori.destroy', $k) }}" method="POST" style="display:inline">
                     @csrf
                     @method('DELETE')
                     <button type="submit">Hapus</button>

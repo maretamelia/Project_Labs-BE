@@ -13,7 +13,6 @@
     <h2>{{ $barang->nama_barang }}</h2>
     <p><strong>Kategori:</strong> {{ $barang->kategori->nama_kategori ?? '-' }}</p>
     <p><strong>Kode Barang:</strong> {{ $barang->kode_barang }}</p>
-    <p><strong>Harga:</strong> Rp {{ number_format($barang->harga,0,',','.') }}</p>
     <p><strong>Stok:</strong> {{ $barang->stok }}</p>
     <p><strong>Deskripsi:</strong><br>{{ $barang->deskripsi ?? '-' }}</p>
 </div>

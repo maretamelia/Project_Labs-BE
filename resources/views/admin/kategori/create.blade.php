@@ -15,7 +15,7 @@
 @endif
 
 <!-- Form tambah kategori -->
-<form action="{{ route('kategori.store') }}" method="POST">
+<form action="{{ route('admin.kategori.store') }}" method="POST">
     @csrf
     <label>Nama Kategori</label>
     <input type="text" name="nama_kategori" value="{{ old('nama_kategori') }}">
@@ -23,5 +23,5 @@
 </form>
 
 <!-- Tombol kembali -->
-<a href="{{ route('kategori.index') }}">Kembali</a>
+<a href="{{ route('admin.kategori.index') }}">Kembali</a>
 @endsection
