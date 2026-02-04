@@ -35,8 +35,8 @@ Route::middleware('auth:sanctum')->post('/logout', [
 /* =========================
 | USER (SESUI WEB ROUTE)
 ========================= */
-Route::middleware('auth:sanctum')
-    ->prefix('user')
+Route::prefix('user')
+    ->middleware('auth:sanctum')
     ->group(function () {
 
         // USER - BARANG (VIEW ONLY)
@@ -58,10 +58,10 @@ Route::middleware('auth:sanctum')
 /* =========================
 | ADMIN (SESUI WEB ROUTE)
 ========================= */
-Route::middleware(['auth:sanctum', 'role:admin'])
-    ->prefix('admin')
+Route::prefix('admin')
+    ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
-        // ADMIN - KATEGORI
+    // ADMIN - KATEGORI
         Route::get('/kategori', [KategoriController::class, 'index']);          // list
         Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update']); // update
@@ -74,11 +74,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::delete('/barang/{barang}', [BarangController::class, 'apiDestroy']);
 
         // ADMIN - PEMINJAMAN
-        Route::get('/peminjaman', [PeminjamanAdminController::class, 'apiDaftar']);
+        Route::get('/peminjaman', [PeminjamanAdminController::class, 'apiIndex']);
         Route::get('/peminjaman/riwayat', [PeminjamanAdminController::class, 'apiRiwayat']);
-        Route::get('/peminjaman/{peminjaman}', [PeminjamanAdminController::class, 'apiShow']);
-
-        Route::post('/peminjaman/{peminjaman}/approve', [PeminjamanAdminController::class, 'apiApprove']);
-        Route::post('/peminjaman/{peminjaman}/reject', [PeminjamanAdminController::class, 'apiReject']);
-        Route::post('/peminjaman/{peminjaman}/return', [PeminjamanAdminController::class, 'apiReturn']);
+        Route::get('/peminjaman/{id}', [PeminjamanAdminController::class, 'apiShow']);
+        Route::post('/peminjaman/{id}/approve', [PeminjamanAdminController::class, 'apiApprove']);
+        Route::post('/peminjaman/{id}/reject', [PeminjamanAdminController::class, 'apiReject']);
     });

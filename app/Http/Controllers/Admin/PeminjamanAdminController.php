@@ -9,7 +9,10 @@ use Carbon\Carbon;
 
 class PeminjamanAdminController extends Controller
 {
-    // Daftar peminjaman aktif
+    /* =====================
+       ======= WEB =========
+       ===================== */
+
     public function daftarPeminjaman()
     {
         $peminjamans = Peminjaman::with(['user', 'barang'])
@@ -20,7 +23,6 @@ class PeminjamanAdminController extends Controller
         return view('admin.peminjaman.daftar', compact('peminjamans'));
     }
 
-    // Riwayat peminjaman (selesai/ditolak)
     public function riwayatPeminjaman()
     {
         $peminjamans = Peminjaman::with(['user', 'barang'])
@@ -31,44 +33,70 @@ class PeminjamanAdminController extends Controller
         return view('admin.peminjaman.riwayat', compact('peminjamans'));
     }
 
-    // Approve peminjaman
-    public function approvePeminjaman(Peminjaman $peminjaman)
+    public function show($id)
     {
+        $peminjaman = Peminjaman::with(['user', 'barang'])->findOrFail($id);
+        return view('admin.peminjaman.show', compact('peminjaman'));
+    }
+
+    /* =====================
+       ======= API =========
+       ===================== */
+
+    public function __construct()
+{
+    $this->middleware(['auth:sanctum', 'role:admin']);
+}
+
+       // GET api/admin/peminjaman
+    public function apiIndex()
+    {
+        $peminjamans = Peminjaman::with(['user', 'barang'])
+            ->whereIn('status', ['pending', 'peminjaman', 'disetujui', 'pengembalian', 'terlambat'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $peminjamans
+        ]);
+    }
+
+    // POST api/admin/peminjaman/{id}/approve
+    public function apiApprove($id)
+    {
+        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
         $barang = $peminjaman->barang;
 
-        if(!in_array($peminjaman->status, ['pending', 'peminjaman', 'pengembalian'])) {
+        if ($peminjaman->status === 'pending') {
+
+            if ($barang->stok < $peminjaman->jumlah_pinjam) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Stok barang tidak mencukupi'
+                ], 400);
+            }
+
+            $barang->decrement('stok', $peminjaman->jumlah_pinjam);
+            $peminjaman->status = 'disetujui';
+        }
+        elseif ($peminjaman->status === 'pengembalian') {
+
+            $today = Carbon::today();
+
+            if ($today->gt($peminjaman->tanggal_pengembalian)) {
+                $peminjaman->status = 'terlambat';
+            } else {
+                $peminjaman->status = 'dikembalikan';
+            }
+
+            $barang->increment('stok', $peminjaman->jumlah_pinjam);
+        }
+        else {
             return response()->json([
                 'success' => false,
-                'message' => 'Status ini tidak bisa diterima'
-            ]);
-        }
-
-        switch($peminjaman->status) {
-            case 'pending':
-            case 'peminjaman':
-                // Kurangi stok saat disetujui, hanya jika belum dikurangi
-                if ($peminjaman->status === 'pending') {
-                    if ($barang->stok < $peminjaman->jumlah_pinjam) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Stok barang tidak mencukupi'
-                        ]);
-                    }
-                    $barang->decrement('stok', $peminjaman->jumlah_pinjam);
-                }
-                $peminjaman->status = 'disetujui';
-                break;
-
-            case 'pengembalian':
-                $today = Carbon::today();
-                if($today->gt(Carbon::parse($peminjaman->tanggal_pengembalian))) {
-                    $peminjaman->status = 'terlambat';
-                } else {
-                    $peminjaman->status = 'dikembalikan';
-                }
-                // Tambahkan stok kembali saat dikembalikan
-                $barang->increment('stok', $peminjaman->jumlah_pinjam);
-                break;
+                'message' => 'Status tidak bisa diproses'
+            ], 400);
         }
 
         $peminjaman->save();
@@ -79,19 +107,19 @@ class PeminjamanAdminController extends Controller
         ]);
     }
 
-    // Reject peminjaman
-    public function rejectPeminjaman(Peminjaman $peminjaman)
+    // POST api/admin/peminjaman/{id}/reject
+    public function apiReject($id)
     {
+        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
         $barang = $peminjaman->barang;
 
-        if(!in_array($peminjaman->status, ['pending', 'peminjaman', 'pengembalian', 'terlambat'])) {
+        if (!in_array($peminjaman->status, ['pending', 'peminjaman', 'pengembalian', 'terlambat'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Status ini tidak bisa ditolak'
-            ]);
+                'message' => 'Status tidak bisa ditolak'
+            ], 400);
         }
 
-        // Kembalikan stok jika peminjaman dibatalkan
         if (in_array($peminjaman->status, ['pending', 'peminjaman', 'terlambat'])) {
             $barang->increment('stok', $peminjaman->jumlah_pinjam);
         }
@@ -104,10 +132,29 @@ class PeminjamanAdminController extends Controller
             'status' => $peminjaman->status
         ]);
     }
-    public function show($id)
+    // GET api/admin/peminjaman/riwayat
+public function apiRiwayat()
 {
-    $peminjaman = Peminjaman::with('user', 'barang')->findOrFail($id);
-    return view('admin.peminjaman.show', compact('peminjaman'));
+    $peminjamans = Peminjaman::with(['user', 'barang'])
+        ->whereIn('status', ['ditolak', 'dikembalikan'])
+        ->orderBy('updated_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $peminjamans
+    ]);
 }
+// GET api/admin/peminjaman/{id}
+public function apiShow($id)
+{
+    $peminjaman = Peminjaman::with(['user', 'barang'])->findOrFail($id);
+
+    return response()->json([
+        'success' => true,
+        'data' => $peminjaman
+    ]);
+}
+
 
 }

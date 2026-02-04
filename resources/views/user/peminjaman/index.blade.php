@@ -37,7 +37,6 @@
                         @php $status = strtolower($peminjaman->status); @endphp
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <!-- Ganti nama field sesuai database -->
                             <td>{{ $peminjaman->barang->nama_barang ?? '-' }}</td>
                             <td>{{ $peminjaman->barang->kategori->nama_kategori ?? '-' }}</td>
                             <td>{{ $peminjaman->jumlah_pinjam }}</td>
@@ -47,11 +46,15 @@
                                     ? $peminjaman->tanggal_pengembalian->format('d M Y')
                                     : '-' }}
                             </td>
+
+                            {{-- STATUS --}}
                             <td>
                                 @if ($status === 'pending')
                                     <span class="badge bg-warning text-dark">Pending</span>
                                 @elseif ($status === 'disetujui')
                                     <span class="badge bg-success">Disetujui</span>
+                                @elseif ($status === 'pending_return')
+                                    <span class="badge bg-info">Menunggu ACC Pengembalian</span>
                                 @elseif ($status === 'ditolak')
                                     <span class="badge bg-danger">Ditolak</span>
                                 @elseif ($status === 'dikembalikan')
@@ -60,11 +63,16 @@
                                     <span class="badge bg-light text-dark">{{ ucfirst($status) }}</span>
                                 @endif
                             </td>
+
+                            {{-- AKSI --}}
                             <td class="text-center">
                                 @if ($status === 'pending')
-                                    <a href="{{ route('user.peminjaman.edit', $peminjaman->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                    <a href="{{ route('user.peminjaman.edit', $peminjaman->id) }}"
+                                       class="btn btn-sm btn-warning">Edit</a>
 
-                                    <form action="{{ route('user.peminjaman.destroy', $peminjaman->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin membatalkan peminjaman ini?')">
+                                    <form action="{{ route('user.peminjaman.destroy', $peminjaman->id) }}"
+                                          method="POST" class="d-inline"
+                                          onsubmit="return confirm('Yakin ingin membatalkan peminjaman ini?')">
                                         @csrf
                                         @method('DELETE')
                                         <button class="btn btn-sm btn-danger">Hapus</button>
@@ -75,15 +83,24 @@
                                         $now = \Carbon\Carbon::now();
                                         $tanggalKembali = $peminjaman->tanggal_pengembalian;
                                     @endphp
-                                    <form action="{{ route('user.peminjaman.return', $peminjaman->id) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('user.peminjaman.return', $peminjaman->id) }}"
+                                          method="POST" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-primary" {{ $now->lt($tanggalKembali) ? 'disabled' : '' }}>
-                                            Pengembalian
+                                        <button type="submit"
+                                                class="btn btn-sm btn-primary"
+                                                {{ $now->lt($tanggalKembali) ? 'disabled' : '' }}>
+                                            Ajukan Pengembalian
                                         </button>
                                     </form>
 
+                                @elseif ($status === 'pending_return')
+                                    <span class="text-muted fst-italic">
+                                        Menunggu persetujuan admin
+                                    </span>
+
                                 @elseif (in_array($status, ['ditolak', 'dikembalikan']))
-                                    <a href="{{ route('user.peminjaman.show', $peminjaman->id) }}" class="btn btn-sm btn-info">Detail</a>
+                                    <a href="{{ route('user.peminjaman.show', $peminjaman->id) }}"
+                                       class="btn btn-sm btn-info">Detail</a>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif

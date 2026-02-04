@@ -14,21 +14,18 @@ class BarangController extends Controller
     // WEB CONTROLLER
     // ========================
 
-    // Tampilkan semua barang (web)
     public function index()
     {
-        $barang = Barang::with('kategori')->get(); // load kategori
+        $barang = Barang::with('kategori')->get();
         return view('admin.barang.index', compact('barang'));
     }
 
-    // Form tambah barang (web)
     public function create()
     {
         $kategori = CategoryBarang::all();
         return view('admin.barang.create', compact('kategori'));
     }
 
-    // Simpan barang baru (web)
     public function store(Request $request)
     {
         $request->validate([
@@ -37,10 +34,12 @@ class BarangController extends Controller
             'kode_barang' => 'required|string|max:100',
             'deskripsi'   => 'nullable|string',
             'stok'        => 'required|integer',
-            'image'       => 'nullable|image|max:2048', // maksimal 2MB
+            'image'       => 'nullable|image|max:2048',
         ]);
 
         $data = $request->all();
+
+        // 🔹 Jika ada file gambar, simpan ke storage/public/barang_images
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('barang_images', 'public');
         }
@@ -50,28 +49,28 @@ class BarangController extends Controller
         return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil ditambahkan');
     }
 
-    // Form edit barang (web)
     public function edit(Barang $barang)
     {
         $kategori = CategoryBarang::all();
         return view('admin.barang.edit', compact('barang', 'kategori'));
     }
 
-    // Update barang (web)
     public function update(Request $request, Barang $barang)
     {
         $request->validate([
-    'nama_barang' => 'sometimes|string',
-    'category_id' => 'sometimes|integer',
-    'kode_barang' => 'sometimes|string',
-    'stok' => 'sometimes|integer',
-    'image' => 'nullable|image',
-]);
+            'nama_barang' => 'sometimes|string',
+            'category_id' => 'sometimes|integer',
+            'kode_barang' => 'sometimes|string',
+            'stok' => 'sometimes|integer',
+            'image' => 'nullable|image',
+        ]);
 
         $data = $request->all();
+
+        // 🔹 Jika ada file gambar baru, hapus yang lama lalu simpan yang baru
         if ($request->hasFile('image')) {
             if ($barang->image) {
-                Storage::disk('public')->delete($barang->image); // hapus gambar lama
+                Storage::disk('public')->delete($barang->image);
             }
             $data['image'] = $request->file('image')->store('barang_images', 'public');
         }
@@ -81,7 +80,6 @@ class BarangController extends Controller
         return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil diubah');
     }
 
-    // Hapus barang (web)
     public function destroy(Barang $barang)
     {
         if ($barang->image) {
@@ -92,10 +90,9 @@ class BarangController extends Controller
         return redirect()->route('admin.barang.index')->with('success', 'Barang berhasil dihapus');
     }
 
-    // Tampilkan detail barang (web)
     public function show(Barang $barang)
     {
-        $barang->load('kategori'); // pastikan kategori ikut di-load
+        $barang->load('kategori');
         return view('admin.barang.show', compact('barang'));
     }
 
@@ -103,21 +100,19 @@ class BarangController extends Controller
     // API CONTROLLER
     // ========================
 
-    // Tampilkan semua barang (API)
     public function apiIndex()
     {
         $barang = Barang::with('kategori')->get();
         return response()->json($barang);
     }
 
-    // Tampilkan detail barang (API)
     public function apiShow(Barang $barang)
     {
         $barang->load('kategori');
         return response()->json($barang);
     }
 
-    // Tambah barang (API)
+    // 🔹 Tambah barang lewat API
     public function apiStore(Request $request)
     {
         $data = $request->validate([
@@ -126,9 +121,10 @@ class BarangController extends Controller
             'kode_barang' => 'required|string|max:100',
             'stok'        => 'required|integer',
             'deskripsi'   => 'nullable|string',
-            'image'       => 'nullable|image|max:2048',
+            'image'       => 'nullable|image|max:2048', // optional
         ]);
 
+        // 🔹 Jika ada file gambar di API, simpan
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('barang_images', 'public');
         }
@@ -139,32 +135,31 @@ class BarangController extends Controller
         return response()->json($barang, 201);
     }
 
-    // Update barang (API)
-public function apiUpdate(Request $request, Barang $barang)
-{
-    $data = $request->validate([
-        'nama_barang' => 'sometimes|string',
-        'category_id' => 'sometimes|integer',
-        'kode_barang' => 'sometimes|string',
-        'stok' => 'sometimes|integer',
-        'image' => 'nullable|image',
-    ]);
+    // 🔹 Update barang lewat API
+    public function apiUpdate(Request $request, Barang $barang)
+    {
+        $data = $request->validate([
+            'nama_barang' => 'sometimes|string',
+            'category_id' => 'sometimes|integer',
+            'kode_barang' => 'sometimes|string',
+            'stok' => 'sometimes|integer',
+            'image' => 'nullable|image',
+        ]);
 
-    if ($request->hasFile('image')) {
-        if ($barang->image) {
-            Storage::disk('public')->delete($barang->image);
+        // 🔹 Jika ada file gambar baru, hapus yang lama dulu
+        if ($request->hasFile('image')) {
+            if ($barang->image) {
+                Storage::disk('public')->delete($barang->image);
+            }
+            $data['image'] = $request->file('image')->store('barang_images', 'public');
         }
-        $data['image'] = $request->file('image')->store('barang_images', 'public');
+
+        $barang->update($data);
+        $barang->load('kategori');
+
+        return response()->json($barang);
     }
 
-    $barang->update($data);
-    $barang->load('kategori');
-
-    return response()->json($barang);
-}
-
-
-    // Hapus barang (API)
     public function apiDestroy(Barang $barang)
     {
         if ($barang->image) {
