@@ -23,14 +23,10 @@ use App\Http\Controllers\Admin\KategoriController;
 | AUTH
 ========================= */
 Route::post('/register', [UserAuthController::class, 'register']);
-Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/login', [AuthenticatedSessionController::class, 'apiLogin']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionController::class, 'apiLogout']);
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('/reset-password', [NewPasswordController::class, 'store']);
-
-Route::middleware('auth:sanctum')->post('/logout', [
-    AuthenticatedSessionController::class,
-    'destroy'
-]);
 
 /* =========================
 | USER (SESUI WEB ROUTE)
