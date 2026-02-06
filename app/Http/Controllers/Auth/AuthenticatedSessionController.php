@@ -83,24 +83,16 @@ class AuthenticatedSessionController extends Controller
 
     $token = $user->createToken('api-token')->plainTextToken;
 
+    // 🔥 Kirim hanya properti penting termasuk role
     return response()->json([
         'success' => true,
-        'user'    => $user,
-        'token'   => $token
+        'user' => [
+            'id'    => $user->id,
+            'name'  => $user->name,
+            'email' => $user->email,
+            'role'  => $user->role, // penting untuk redirect frontend
+        ],
+        'token' => $token
     ]);
 }
-public function apiLogout(Request $request)
-{
-    $user = $request->user(); // ambil user dari token
-
-    if ($user) {
-        $user->tokens()->delete(); // hapus semua token aktif
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Logout berhasil'
-    ]);
-}
-
 }
