@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API ROUTES
@@ -35,6 +36,8 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionControll
 Route::prefix('user')
     ->middleware('auth:sanctum')
     ->group(function () {
+        // USER DASHBOARD
+        Route::get('/user/dashboard', [App\Http\Controllers\User\DashboardController::class, 'index']);
 
         // PROFIL
         Route::get('/profile', function (\Illuminate\Http\Request $request) {
@@ -48,6 +51,7 @@ Route::prefix('user')
         // PEMINJAMAN
         Route::prefix('peminjaman')->group(function () {
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
+            Route::get('/user/peminjaman/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
             Route::get('/{peminjaman}', [PeminjamanUserController::class, 'apiShow']);
             Route::put('/{peminjaman}', [PeminjamanUserController::class, 'apiUpdate']);
@@ -62,13 +66,7 @@ Route::prefix('user')
 Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
-
-        // PROFIL
-        Route::get('/profile', function (\Illuminate\Http\Request $request) {
-            return response()->json($request->user());
-        });
-
-        // KATEGORI
+    // ADMIN - KATEGORI
         Route::get('/kategori', [KategoriController::class, 'index']);          // list
         Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update']); // update
