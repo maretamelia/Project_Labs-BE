@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
 
-
 /*
 |--------------------------------------------------------------------------
 | API ROUTES
@@ -24,24 +23,30 @@ use App\Http\Controllers\Admin\KategoriController;
 ========================= */
 Route::post('/register', [UserAuthController::class, 'register']);
 Route::post('/login', [AuthenticatedSessionController::class, 'apiLogin']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionController::class, 'apiLogout']);
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('/reset-password', [NewPasswordController::class, 'store']);
 
+// Logout protected
+Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionController::class, 'apiLogout']);
+
 /* =========================
-| USER (SESUI WEB ROUTE)
+| USER ROUTES
 ========================= */
 Route::prefix('user')
     ->middleware('auth:sanctum')
     ->group(function () {
 
-        // USER - BARANG (VIEW ONLY)
+        // PROFIL
+        Route::get('/profile', function (\Illuminate\Http\Request $request) {
+            return response()->json($request->user());
+        });
+
+        // BARANG (VIEW ONLY)
         Route::get('/barang', [BarangUserController::class, 'apiIndex']);
         Route::get('/barang/{barang}', [BarangUserController::class, 'apiShow']);
 
-        // USER - PEMINJAMAN
+        // PEMINJAMAN
         Route::prefix('peminjaman')->group(function () {
-
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
             Route::get('/{peminjaman}', [PeminjamanUserController::class, 'apiShow']);
@@ -52,24 +57,31 @@ Route::prefix('user')
     });
 
 /* =========================
-| ADMIN (SESUI WEB ROUTE)
+| ADMIN ROUTES
 ========================= */
 Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
-    // ADMIN - KATEGORI
+
+        // PROFIL
+        Route::get('/profile', function (\Illuminate\Http\Request $request) {
+            return response()->json($request->user());
+        });
+
+        // KATEGORI
         Route::get('/kategori', [KategoriController::class, 'index']);          // list
         Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update']); // update
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy']); // hapus
-        // ADMIN - BARANG
+
+        // BARANG
         Route::get('/barang', [BarangController::class, 'apiIndex']);
         Route::get('/barang/{barang}', [BarangController::class, 'apiShow']);
         Route::post('/barang', [BarangController::class, 'apiStore']);
         Route::put('/barang/{barang}', [BarangController::class, 'apiUpdate']);
         Route::delete('/barang/{barang}', [BarangController::class, 'apiDestroy']);
 
-        // ADMIN - PEMINJAMAN
+        // PEMINJAMAN
         Route::get('/peminjaman', [PeminjamanAdminController::class, 'apiIndex']);
         Route::get('/peminjaman/riwayat', [PeminjamanAdminController::class, 'apiRiwayat']);
         Route::get('/peminjaman/{id}', [PeminjamanAdminController::class, 'apiShow']);
