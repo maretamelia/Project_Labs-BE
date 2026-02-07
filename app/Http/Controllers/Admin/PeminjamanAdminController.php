@@ -156,5 +156,4 @@ public function apiShow($id)
     ]);
 }
 
-
 }

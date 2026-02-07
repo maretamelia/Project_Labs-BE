@@ -11,6 +11,7 @@ use App\Http\Controllers\User\BarangUserController;
 use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\DashboardController;
 
 
 /*
@@ -34,6 +35,8 @@ Route::post('/reset-password', [NewPasswordController::class, 'store']);
 Route::prefix('user')
     ->middleware('auth:sanctum')
     ->group(function () {
+        // USER DASHBOARD
+        Route::get('/user/dashboard', [App\Http\Controllers\User\DashboardController::class, 'index']);
 
         // USER - BARANG (VIEW ONLY)
         Route::get('/barang', [BarangUserController::class, 'apiIndex']);
@@ -58,6 +61,8 @@ Route::prefix('user')
 Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
+        // ADMIN - DASHBOARD
+        Route::get('/admin/dashboard-stats', [DashboardController::class, 'index']);
     // ADMIN - KATEGORI
         Route::get('/kategori', [KategoriController::class, 'apiIndex']);         // list
         Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
