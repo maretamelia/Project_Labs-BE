@@ -33,7 +33,25 @@ class PeminjamanUserController extends Controller
             'data' => $peminjamans
         ]);
     }
+/* =========================
+ | API - RIWAYAT PEMINJAMAN USER (Selesai/Ditolak)
+ ========================= */
+public function apiRiwayat()
+{
+    $user = Auth::user();
 
+    $peminjamans = Peminjaman::with(['barang.kategori'])
+        ->where('user_id', $user->id)
+        // Kita ambil status yang sudah final saja
+        ->whereIn('status', ['ditolak', 'dikembalikan']) 
+        ->orderBy('updated_at', 'desc') // Supaya yang baru selesai ada di atas
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $peminjamans
+    ]);
+}
     /* =========================
      | API - SIMPAN PEMINJAMAN
      ========================= */

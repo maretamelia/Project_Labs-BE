@@ -4,21 +4,42 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Barang;
+use Illuminate\Http\Request;
 
 class BarangUserController extends Controller
 {
-    // Tampilkan semua barang untuk user
-    public function index()
+    // Fungsi API untuk React
+    public function apiIndex()
     {
-        // Ambil semua barang + relasi kategori
-        $barang = Barang::with('kategori')->get();
-        return view('user.barang.index', compact('barang'));
+        try {
+            // Kita panggil relasi 'kategori' yang sudah kamu buat di Model
+            $barang = Barang::with('kategori')->get();
+            
+            return response()->json([
+                'status' => 'success',
+                'data' => $barang
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    public function show(Barang $barang)
-{
-    $barang->load('kategori'); // pastikan kategori ikut muncul
-    return view('user.barang.show', compact('barang'));
-}
-
+    public function apiShow($id)
+    {
+        try {
+            $barang = Barang::with('kategori')->find($id);
+            if (!$barang) {
+                return response()->json(['message' => 'Barang tidak ditemukan'], 404);
+            }
+            return response()->json([
+                'status' => 'success',
+                'data' => $barang
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
 }

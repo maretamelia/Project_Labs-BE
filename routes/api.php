@@ -43,6 +43,7 @@ Route::prefix('user')
         Route::prefix('peminjaman')->group(function () {
 
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
+            Route::get('/user/peminjaman/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
             Route::get('/{peminjaman}', [PeminjamanUserController::class, 'apiShow']);
             Route::put('/{peminjaman}', [PeminjamanUserController::class, 'apiUpdate']);
@@ -58,7 +59,7 @@ Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
     // ADMIN - KATEGORI
-        Route::get('/kategori', [KategoriController::class, 'index']);          // list
+        Route::get('/kategori', [KategoriController::class, 'apiIndex']);         // list
         Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
         Route::put('/kategori/{kategori}', [KategoriController::class, 'update']); // update
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy']); // hapus

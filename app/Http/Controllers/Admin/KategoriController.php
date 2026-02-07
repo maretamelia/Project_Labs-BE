@@ -17,7 +17,8 @@ class KategoriController extends Controller
     // ✨ List kategori (web + API)
     public function index()
     {
-        $kategori = CategoryBarang::all();
+        // ambil semua kategori beserta jumlah barangnya
+        $kategori = CategoryBarang::withCount('barangs')->get();
 
         // Kalau dipanggil dari API
         if (request()->is('api/*')) {
@@ -40,6 +41,15 @@ class KategoriController extends Controller
         $request->validate([
             'nama_kategori' => 'required|string|max:255',
         ]);
+
+        // cek apakah kategori sudah ada
+        if (CategoryBarang::where('nama_kategori', $request->nama_kategori)->exists()) {
+            $msg = 'Kategori telah dibuat';
+            if (request()->is('api/*')) {
+                return response()->json(['message' => $msg], 400);
+            }
+            return redirect()->back()->with('error', $msg)->withInput();
+        }
 
         $kategori = CategoryBarang::create([
             'nama_kategori' => $request->nama_kategori,
@@ -71,6 +81,18 @@ class KategoriController extends Controller
             'nama_kategori' => 'required|string|max:255',
         ]);
 
+        // opsional: cek duplikat saat update
+        if (CategoryBarang::where('nama_kategori', $request->nama_kategori)
+            ->where('id', '!=', $kategori->id)
+            ->exists()
+        ) {
+            $msg = 'Kategori telah dibuat';
+            if (request()->is('api/*')) {
+                return response()->json(['message' => $msg], 400);
+            }
+            return redirect()->back()->with('error', $msg)->withInput();
+        }
+
         $kategori->update([
             'nama_kategori' => $request->nama_kategori,
         ]);
@@ -90,6 +112,15 @@ class KategoriController extends Controller
     // ✨ Hapus kategori (web + API)
     public function destroy(CategoryBarang $kategori)
     {
+        // cek apakah kategori masih punya barang
+        if ($kategori->barangs()->count() > 0) {
+            $msg = 'Kategori digunakan pada barang';
+            if (request()->is('api/*')) {
+                return response()->json(['message' => $msg], 400);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
         $kategori->delete();
 
         // Kalau dipanggil dari API
@@ -102,4 +133,11 @@ class KategoriController extends Controller
         return redirect()->route('admin.kategori.index')
             ->with('success', 'Kategori berhasil dihapus');
     }
+    public function apiIndex() {
+    // Tambahkan withCount('barangs') di sini!
+    $kategori = CategoryBarang::withCount('barangs')->get(); 
+    return response()->json($kategori);
+    
+}
+
 }
