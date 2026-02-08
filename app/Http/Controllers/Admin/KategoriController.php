@@ -5,139 +5,102 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CategoryBarang;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class KategoriController extends Controller
 {
-    // ✨ API: detail 1 kategori
-    public function show(CategoryBarang $kategori)
-    {
-        return response()->json($kategori);
-    }
-
-    // ✨ List kategori (web + API)
+    /**
+     * GET /api/admin/kategori
+     * Ambil semua kategori (yang belum dihapus)
+     */
     public function index()
     {
-        // ambil semua kategori beserta jumlah barangnya
-        $kategori = CategoryBarang::withCount('barangs')->get();
+        $kategori = CategoryBarang::withCount('barangs')
+            ->orderByDesc('id')
+            ->get();
 
-        // Kalau dipanggil dari API
-        if (request()->is('api/*')) {
-            return response()->json($kategori);
-        }
-
-        // Kalau dipanggil dari web
-        return view('admin.kategori.index', compact('kategori'));
+        return response()->json([
+            'data' => $kategori
+        ]);
     }
 
-    // ✨ Form tambah kategori (web)
-    public function create()
-    {
-        return view('admin.kategori.create');
-    }
-
-    // ✨ Simpan kategori (web + API)
+    /**
+     * POST /api/admin/kategori
+     * Tambah kategori
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'nama_kategori' => 'required|string|max:255',
+            'nama_kategori' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('category_barangs', 'nama_kategori')
+                    ->whereNull('deleted_at')
+            ]
+        ], [
+            'nama_kategori.unique' => 'Kategori dengan nama tersebut sudah ada'
         ]);
-
-        // cek apakah kategori sudah ada
-        if (CategoryBarang::where('nama_kategori', $request->nama_kategori)->exists()) {
-            $msg = 'Kategori telah dibuat';
-            if (request()->is('api/*')) {
-                return response()->json(['message' => $msg], 400);
-            }
-            return redirect()->back()->with('error', $msg)->withInput();
-        }
 
         $kategori = CategoryBarang::create([
-            'nama_kategori' => $request->nama_kategori,
+            'nama_kategori' => $request->nama_kategori
         ]);
 
-        // Kalau dipanggil dari API
-        if (request()->is('api/*')) {
-            return response()->json([
-                'message' => 'Kategori berhasil ditambahkan',
-                'data' => $kategori
-            ], 201);
-        }
-
-        // Kalau dipanggil dari web
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori berhasil ditambahkan');
+        return response()->json([
+            'message' => 'Kategori berhasil ditambahkan',
+            'data' => $kategori
+        ], 201);
     }
 
-    // ✨ Form edit kategori (web)
-    public function edit(CategoryBarang $kategori)
+    /**
+     * PUT /api/admin/kategori/{id}
+     * Update kategori
+     */
+    public function update(Request $request, $id)
     {
-        return view('admin.kategori.edit', compact('kategori'));
-    }
+        $kategori = CategoryBarang::findOrFail($id);
 
-    // ✨ Update kategori (web + API)
-    public function update(Request $request, CategoryBarang $kategori)
-    {
         $request->validate([
-            'nama_kategori' => 'required|string|max:255',
+            'nama_kategori' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('category_barangs', 'nama_kategori')
+                    ->whereNull('deleted_at')
+                    ->ignore($kategori->id)
+            ]
+        ], [
+            'nama_kategori.unique' => 'Kategori dengan nama tersebut sudah ada'
         ]);
-
-        // opsional: cek duplikat saat update
-        if (CategoryBarang::where('nama_kategori', $request->nama_kategori)
-            ->where('id', '!=', $kategori->id)
-            ->exists()
-        ) {
-            $msg = 'Kategori telah dibuat';
-            if (request()->is('api/*')) {
-                return response()->json(['message' => $msg], 400);
-            }
-            return redirect()->back()->with('error', $msg)->withInput();
-        }
 
         $kategori->update([
-            'nama_kategori' => $request->nama_kategori,
+            'nama_kategori' => $request->nama_kategori
         ]);
 
-        // Kalau dipanggil dari API
-        if (request()->is('api/*')) {
-            return response()->json([
-                'message' => 'Kategori berhasil diubah',
-                'data' => $kategori
-            ]);
-        }
-
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori berhasil diubah');
+        return response()->json([
+            'message' => 'Kategori berhasil diupdate',
+            'data' => $kategori
+        ]);
     }
 
-    // ✨ Hapus kategori (web + API)
-    public function destroy(CategoryBarang $kategori)
+    /**
+     * DELETE /api/admin/kategori/{id}
+     * Soft delete kategori
+     */
+    public function destroy($id)
     {
-        // cek apakah kategori masih punya barang
+        $kategori = CategoryBarang::findOrFail($id);
+
         if ($kategori->barangs()->count() > 0) {
-            $msg = 'Kategori digunakan pada barang';
-            if (request()->is('api/*')) {
-                return response()->json(['message' => $msg], 400);
-            }
-            return redirect()->back()->with('error', $msg);
-        }
-
-        $kategori->delete();
-
-        // Kalau dipanggil dari API
-        if (request()->is('api/*')) {
             return response()->json([
-                'message' => 'Kategori berhasil dihapus'
-            ]);
+                'message' => 'Kategori masih digunakan oleh barang'
+            ], 400);
         }
 
-        return redirect()->route('admin.kategori.index')
-            ->with('success', 'Kategori berhasil dihapus');
-    }
-    public function apiIndex() {
-    // Tambahkan withCount('barangs') di sini!
-    $kategori = CategoryBarang::withCount('barangs')->get(); 
-    return response()->json($kategori);
-    
-}
+        $kategori->delete(); // soft delete
 
+        return response()->json([
+            'message' => 'Kategori berhasil dihapus'
+        ]);
+    }
 }

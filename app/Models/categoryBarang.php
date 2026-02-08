@@ -10,11 +10,17 @@ class CategoryBarang extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'category_barangs'; // Sesuaikan dengan nama tabel di database
+    protected $table = 'category_barangs';
 
-    protected $fillable = ['nama_kategori'];
+    protected $fillable = [
+        'nama_kategori',
+    ];
 
-    // Relasi ke Barang
+    protected $dates = [
+        'deleted_at',
+    ];
+
+    // Relasi ke tabel barangs
     public function barangs()
     {
         return $this->hasMany(Barang::class, 'category_id');

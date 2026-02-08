@@ -1,6 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
+/*
+|--------------------------------------------------------------------------
+| Controllers
+|--------------------------------------------------------------------------
+*/
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\UserAuthController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -8,39 +15,37 @@ use App\Http\Controllers\Auth\NewPasswordController;
 
 use App\Http\Controllers\User\PeminjamanUserController;
 use App\Http\Controllers\User\BarangUserController;
+
 use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
 
-
 /*
 |--------------------------------------------------------------------------
-| API ROUTES
+| AUTH
 |--------------------------------------------------------------------------
 */
-
-/* =========================
-| AUTH
-========================= */
 Route::post('/register', [UserAuthController::class, 'register']);
 Route::post('/login', [AuthenticatedSessionController::class, 'apiLogin']);
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
 Route::post('/reset-password', [NewPasswordController::class, 'store']);
 
-// Logout protected
-Route::middleware('auth:sanctum')->post('/logout', [AuthenticatedSessionController::class, 'apiLogout']);
+Route::middleware('auth:sanctum')->post(
+    '/logout',
+    [AuthenticatedSessionController::class, 'apiLogout']
+);
 
-/* =========================
-| USER ROUTES
-========================= */
+/*
+|--------------------------------------------------------------------------
+| USER ROUTES (ROLE: USER)
+|--------------------------------------------------------------------------
+*/
 Route::prefix('user')
-    ->middleware('auth:sanctum')
+    ->middleware(['auth:sanctum', 'role:user'])
     ->group(function () {
-        // USER DASHBOARD
-        Route::get('/user/dashboard', [App\Http\Controllers\User\DashboardController::class, 'index']);
 
-        // PROFIL
-        Route::get('/profile', function (\Illuminate\Http\Request $request) {
+        // PROFILE USER
+        Route::get('/profile', function (Request $request) {
             return response()->json($request->user());
         });
 
@@ -48,10 +53,10 @@ Route::prefix('user')
         Route::get('/barang', [BarangUserController::class, 'apiIndex']);
         Route::get('/barang/{barang}', [BarangUserController::class, 'apiShow']);
 
-        // PEMINJAMAN
+        // PEMINJAMAN USER
         Route::prefix('peminjaman')->group(function () {
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
-            Route::get('/user/peminjaman/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
+            Route::get('/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
             Route::get('/{peminjaman}', [PeminjamanUserController::class, 'apiShow']);
             Route::put('/{peminjaman}', [PeminjamanUserController::class, 'apiUpdate']);
@@ -60,17 +65,25 @@ Route::prefix('user')
         });
     });
 
-/* =========================
-| ADMIN ROUTES
-========================= */
+/*
+|--------------------------------------------------------------------------
+| ADMIN ROUTES (ROLE: ADMIN)
+|--------------------------------------------------------------------------
+*/
 Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
-    // ADMIN - KATEGORI
-        Route::get('/kategori', [KategoriController::class, 'index']);          // list
-        Route::post('/kategori', [KategoriController::class, 'store']);         // tambah
-        Route::put('/kategori/{kategori}', [KategoriController::class, 'update']); // update
-        Route::delete('/kategori/{kategori}', [KategoriController::class, 'destroy']); // hapus
+
+        // PROFILE ADMIN
+        Route::get('/profile', function (Request $request) {
+            return response()->json($request->user());
+        });
+
+        // KATEGORI
+        Route::get('/kategori', [KategoriController::class, 'index']);
+        Route::post('/kategori', [KategoriController::class, 'store']);
+        Route::put('/kategori/{id}', [KategoriController::class, 'update']);
+        Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);
 
         // BARANG
         Route::get('/barang', [BarangController::class, 'apiIndex']);
@@ -79,7 +92,7 @@ Route::prefix('admin')
         Route::put('/barang/{barang}', [BarangController::class, 'apiUpdate']);
         Route::delete('/barang/{barang}', [BarangController::class, 'apiDestroy']);
 
-        // PEMINJAMAN
+        // PEMINJAMAN ADMIN
         Route::get('/peminjaman', [PeminjamanAdminController::class, 'apiIndex']);
         Route::get('/peminjaman/riwayat', [PeminjamanAdminController::class, 'apiRiwayat']);
         Route::get('/peminjaman/{id}', [PeminjamanAdminController::class, 'apiShow']);
