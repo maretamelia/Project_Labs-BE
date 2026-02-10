@@ -12,7 +12,6 @@ class PeminjamanUserController extends Controller
 {
     public function __construct()
     {
-        // Pastikan semua route pakai auth:sanctum
         $this->middleware('auth:sanctum');
     }
 
@@ -22,7 +21,6 @@ class PeminjamanUserController extends Controller
     public function apiIndex()
     {
         $user = Auth::user();
-
         $peminjamans = Peminjaman::with(['barang.kategori'])
             ->where('user_id', $user->id)
             ->latest()
@@ -33,31 +31,34 @@ class PeminjamanUserController extends Controller
             'data' => $peminjamans
         ]);
     }
-/* =========================
- | API - RIWAYAT PEMINJAMAN USER (Selesai/Ditolak)
- ========================= */
-public function apiRiwayat()
-{
-    $user = Auth::user();
 
-    $peminjamans = Peminjaman::with(['barang.kategori'])
-        ->where('user_id', $user->id)
-        // Kita ambil status yang sudah final saja
-        ->whereIn('status', ['ditolak', 'dikembalikan']) 
-        ->orderBy('updated_at', 'desc') // Supaya yang baru selesai ada di atas
-        ->get();
+    /* =========================
+     | API - RIWAYAT PEMINJAMAN USER
+     ========================= */
+    public function apiRiwayat()
+    {
+        $user = Auth::user();
+        $peminjamans = Peminjaman::with(['barang.kategori'])
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['ditolak', 'dikembalikan'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $peminjamans
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $peminjamans
+        ]);
+    }
+
     /* =========================
      | API - SIMPAN PEMINJAMAN
      ========================= */
     public function apiStore(Request $request)
     {
         $user = Auth::user();
+
+        // debug sementara
+        // dd($request->all());
 
         $request->validate([
             'barang_id' => 'required|exists:barangs,id',
@@ -162,9 +163,6 @@ public function apiRiwayat()
         ]);
     }
 
-    /* =========================
-     | API - AJUKAN PENGEMBALIAN
-     ========================= */
     public function apiReturn($id)
     {
         $user = Auth::user();

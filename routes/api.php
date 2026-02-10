@@ -54,7 +54,7 @@ Route::prefix('user')
         Route::get('/barang/{barang}', [BarangUserController::class, 'apiShow']);
 
         // PEMINJAMAN USER
-        Route::prefix('peminjaman')->group(function () {
+        Route::prefix('pinjaman')->group(function () {
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
             Route::get('/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
