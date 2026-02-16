@@ -9,7 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('category_barangs', function (Blueprint $table) {
-            $table->softDeletes(); // otomatis bikin kolom deleted_at nullable
+            if (!Schema::hasColumn('category_barangs', 'deleted_at')) {
+                $table->softDeletes(); // otomatis bikin kolom deleted_at nullable
+            }
         });
     }
 
