@@ -25,7 +25,7 @@ class Barang extends Model
 public function kategori()
 {
     return $this->belongsTo(CategoryBarang::class, 'category_id')
-                ->withTrashed(); // ⬅️ PENTING
+                ->withTrashed(); 
 }
 
 // Relasi ke barang

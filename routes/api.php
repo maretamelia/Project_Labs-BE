@@ -15,10 +15,12 @@ use App\Http\Controllers\Auth\NewPasswordController;
 
 use App\Http\Controllers\User\PeminjamanUserController;
 use App\Http\Controllers\User\BarangUserController;
+use App\Http\Controllers\User\DashboardUserController;
 
 use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +45,8 @@ Route::middleware('auth:sanctum')->post(
 Route::prefix('user')
     ->middleware(['auth:sanctum', 'role:user'])
     ->group(function () {
+    
+    Route::get('/dashboard', [DashboardUserController::class, 'index']);
 
         // PROFILE USER
         Route::get('/profile', function (Request $request) {
@@ -73,6 +77,8 @@ Route::prefix('user')
 Route::prefix('admin')
     ->middleware(['auth:sanctum', 'role:admin'])
     ->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
         // PROFILE ADMIN
         Route::get('/profile', function (Request $request) {

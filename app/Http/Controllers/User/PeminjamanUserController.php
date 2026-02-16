@@ -53,48 +53,47 @@ class PeminjamanUserController extends Controller
     /* =========================
      | API - SIMPAN PEMINJAMAN
      ========================= */
-    public function apiStore(Request $request)
-    {
-        $user = Auth::user();
+public function apiStore(Request $request)
+{
+    $user = Auth::user();
 
-        // debug sementara
-        // dd($request->all());
+    $request->validate([
+        'barang_id' => 'required|exists:barangs,id',
+        'jumlah_pinjam' => 'required|integer|min:1',
+        'tanggal_peminjaman' => 'required|date',
+        'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
+        'keterangan' => 'nullable|string|max:500',
+    ]);
 
-        $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
-            'jumlah_pinjam' => 'required|integer|min:1',
-            'tanggal_peminjaman' => 'required|date',
-            'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
-            'keterangan' => 'nullable|string|max:500',
-        ]);
+    $barang = Barang::findOrFail($request->barang_id);
 
-        $barang = Barang::find($request->barang_id);
-        if (!$barang) {
-            return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan'], 404);
-        }
-
-        if ($barang->stok < $request->jumlah_pinjam) {
-            return response()->json(['success' => false, 'message' => 'Stok barang tidak mencukupi'], 400);
-        }
-
-        $peminjaman = Peminjaman::create([
-            'user_id' => $user->id,
-            'barang_id' => $barang->id,
-            'jumlah_pinjam' => $request->jumlah_pinjam,
-            'tanggal_peminjaman' => $request->tanggal_peminjaman,
-            'tanggal_pengembalian' => $request->tanggal_pengembalian,
-            'keterangan' => $request->keterangan,
-            'status' => 'pending',
-        ]);
-
-        $barang->decrement('stok', $request->jumlah_pinjam);
-
+    if ($barang->stok < $request->jumlah_pinjam) {
         return response()->json([
-            'success' => true,
-            'message' => 'Peminjaman berhasil diajukan',
-            'data' => $peminjaman
-        ], 201);
+            'success' => false,
+            'message' => 'Stok barang tidak mencukupi'
+        ], 400);
     }
+
+    $peminjaman = Peminjaman::create([
+        'user_id' => $user->id,
+        'barang_id' => $barang->id,
+        'jumlah' => $request->jumlah_pinjam,
+        'tanggal_pinjam' => $request->tanggal_peminjaman,
+        'tanggal_kembali' => $request->tanggal_pengembalian,
+        'keterangan' => $request->keterangan,
+
+        'status' => 'pending',
+    ]);
+
+    $barang->decrement('stok', $request->jumlah_pinjam);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Peminjaman berhasil diajukan',
+        'data' => $peminjaman
+    ], 201);
+}
+
 
     /* =========================
      | API - DETAIL PEMINJAMAN
@@ -140,16 +139,16 @@ class PeminjamanUserController extends Controller
             return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan'], 404);
         }
 
-        $selisih = $request->jumlah_pinjam - $peminjaman->jumlah_pinjam;
+        $selisih = $request->jumlah_pinjam - $peminjaman->jumlah;
         if ($selisih > 0 && $barang->stok < $selisih) {
             return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi'], 400);
         }
 
         $peminjaman->update([
             'barang_id' => $barang->id,
-            'jumlah_pinjam' => $request->jumlah_pinjam,
-            'tanggal_peminjaman' => $request->tanggal_peminjaman,
-            'tanggal_pengembalian' => $request->tanggal_pengembalian,
+            'jumlah' => $request->jumlah_pinjam,
+            'tanggal_pinjam' => $request->tanggal_peminjaman,
+            'tanggal_kembali' => $request->tanggal_pengembalian,
             'keterangan' => $request->keterangan,
         ]);
 

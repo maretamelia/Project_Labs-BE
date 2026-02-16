@@ -11,10 +11,9 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. Ambil ID user yang sedang login
         $userId = Auth::id();
 
-        // 2. Hitung statistik khusus untuk user ini saja
+        // Statistik user
         $stats = [
             'dipinjam'  => Peminjaman::where('user_id', $userId)->where('status', 'dipinjam')->count(),
             'menunggu'  => Peminjaman::where('user_id', $userId)->where('status', 'menunggu')->count(),
@@ -22,8 +21,8 @@ class DashboardController extends Controller
             'kembali'   => Peminjaman::where('user_id', $userId)->where('status', 'dikembalikan')->count(),
         ];
 
-        // 3. Ambil 5 data peminjaman terbaru untuk tabel di dashboard
-        $recentPeminjaman = Peminjaman::with('barang') // Pastikan ada relasi 'barang' di model Peminjaman
+        // 5 peminjaman terbaru
+        $recentPeminjaman = Peminjaman::with('barang')
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->take(5)
@@ -39,45 +38,38 @@ class DashboardController extends Controller
                 ];
             });
 
-        // 4. Return sebagai JSON untuk dikonsumsi React
+        // Reminder pengembalian
+        $reminders = Peminjaman::with('barang')
+            ->where('user_id', $userId)
+            ->where('status', 'dipinjam')
+            ->whereBetween('tanggal_kembali', [now(), now()->addDays(3)])
+            ->get()
+            ->map(function($item) {
+                $diff = now()->diffInDays($item->tanggal_kembali, false);
+                $pesan = $diff == 0 ? "Hari ini" : ($diff + 1) . " hari lagi";
+                return [
+                    'nama' => $item->barang->nama_barang,
+                    'pesan' => $pesan
+                ];
+            });
+
+        // Rules statis
+        $rules = [
+            "Maks. 3 barang",
+            "Keterlambatan dikenakan sanksi",
+            "Barang rusak wajib dilaporkan"
+        ];
+
+        // RETURN semua data sekaligus
         return response()->json([
             'success' => true,
             'message' => 'Data dashboard user berhasil diambil',
-            'data'    => [
-                'stats'  => $stats,
-                'recent' => $recentPeminjaman
+            'data' => [
+                'stats'     => $stats,
+                'recent'    => $recentPeminjaman,
+                'reminders' => $reminders,
+                'rules'     => $rules
             ]
         ]);
-        // 5. Logic Pengingat Pengembalian (Barang yang jatuh tempo dalam 3 hari)
-$reminders = Peminjaman::with('barang')
-    ->where('user_id', $userId)
-    ->where('status', 'dipinjam')
-    ->whereBetween('tanggal_kembali', [now(), now()->addDays(3)])
-    ->get()
-    ->map(function($item) {
-        $diff = now()->diffInDays($item->tanggal_kembali, false);
-        $pesan = $diff == 0 ? "Hari ini" : ($diff + 1) . " hari lagi";
-        return [
-            'nama' => $item->barang->nama_barang,
-            'pesan' => $pesan
-        ];
-    });
-
-// 6. Data Aturan Peminjaman (Bisa statis di sini atau ambil dari DB)
-$rules = [
-    "Maks. 3 barang",
-    "Keterlambatan dikenakan sanksi",
-    "Barang rusak wajib dilaporkan"
-];
-
-return response()->json([
-    'success' => true,
-    'data'    => [
-        'stats'  => $stats,
-        'recent' => $recentPeminjaman,
-        'reminders' => $reminders, // Data baru
-        'rules' => $rules          // Data baru
-    ]
-]);
     }
 }

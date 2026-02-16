@@ -102,9 +102,19 @@ class BarangController extends Controller
 
     public function apiIndex()
     {
-    $barangs = Barang::with('kategori')->get(); // 🔹 ini sudah array
-    return response()->json($barangs); 
+        $barangs = Barang::with('kategori')->get();
+
+        // 🔹 Tambahkan URL lengkap gambar
+        $barangs->transform(function ($item) {
+            $item->gambar = $item->image
+                ? asset('storage/' . $item->image) // URL lengkap untuk FE
+                : null;
+            return $item;
+        });
+
+        return response()->json($barangs);
     }
+
 
     public function apiShow(Barang $barang)
     {
