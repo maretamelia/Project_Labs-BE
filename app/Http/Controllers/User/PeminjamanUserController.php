@@ -59,7 +59,7 @@ public function apiStore(Request $request)
 
     $request->validate([
         'barang_id' => 'required|exists:barangs,id',
-        'jumlah_pinjam' => 'required|integer|min:1',
+        'jumlah' => 'required|integer|min:1',
         'tanggal_peminjaman' => 'required|date',
         'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
         'keterangan' => 'nullable|string|max:500',
@@ -67,7 +67,7 @@ public function apiStore(Request $request)
 
     $barang = Barang::findOrFail($request->barang_id);
 
-    if ($barang->stok < $request->jumlah_pinjam) {
+    if ($barang->stok < $request->jumlah) {
         return response()->json([
             'success' => false,
             'message' => 'Stok barang tidak mencukupi'
@@ -77,15 +77,15 @@ public function apiStore(Request $request)
     $peminjaman = Peminjaman::create([
         'user_id' => $user->id,
         'barang_id' => $barang->id,
-        'jumlah' => $request->jumlah_pinjam,
-        'tanggal_pinjam' => $request->tanggal_peminjaman,
-        'tanggal_kembali' => $request->tanggal_pengembalian,
+        'jumlah' => $request->jumlah,
+        'tanggal_peminjaman' => $request->tanggal_peminjaman,
+        'tanggal_pengembalian' => $request->tanggal_pengembalian,
         'keterangan' => $request->keterangan,
 
         'status' => 'pending',
     ]);
 
-    $barang->decrement('stok', $request->jumlah_pinjam);
+    $barang->decrement('stok', $request->jumlah);
 
     return response()->json([
         'success' => true,
@@ -128,7 +128,7 @@ public function apiStore(Request $request)
 
         $request->validate([
             'barang_id' => 'required|exists:barangs,id',
-            'jumlah_pinjam' => 'required|integer|min:1',
+            'jumlah' => 'required|integer|min:1',
             'tanggal_peminjaman' => 'required|date',
             'tanggal_pengembalian' => 'nullable|date|after_or_equal:tanggal_peminjaman',
             'keterangan' => 'nullable|string|max:500',
@@ -139,16 +139,16 @@ public function apiStore(Request $request)
             return response()->json(['success' => false, 'message' => 'Barang tidak ditemukan'], 404);
         }
 
-        $selisih = $request->jumlah_pinjam - $peminjaman->jumlah;
+        $selisih = $request->jumlah - $peminjaman->jumlah;
         if ($selisih > 0 && $barang->stok < $selisih) {
             return response()->json(['success' => false, 'message' => 'Stok tidak mencukupi'], 400);
         }
 
         $peminjaman->update([
             'barang_id' => $barang->id,
-            'jumlah' => $request->jumlah_pinjam,
-            'tanggal_pinjam' => $request->tanggal_peminjaman,
-            'tanggal_kembali' => $request->tanggal_pengembalian,
+            'jumlah' => $request->jumlah,
+            'tanggal_peminjaman' => $request->tanggal_peminjaman,
+            'tanggal_pengembalian' => $request->tanggal_pengembalian,
             'keterangan' => $request->keterangan,
         ]);
 
@@ -196,7 +196,7 @@ public function apiStore(Request $request)
         }
 
         if ($peminjaman->barang) {
-            $peminjaman->barang->increment('stok', $peminjaman->jumlah_pinjam);
+            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
         }
 
         $peminjaman->delete();
@@ -204,3 +204,4 @@ public function apiStore(Request $request)
         return response()->json(['success' => true, 'message' => 'Peminjaman dibatalkan']);
     }
 }
+

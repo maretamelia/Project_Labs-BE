@@ -23,6 +23,16 @@ class KategoriController extends Controller
             'data' => $kategori
         ]);
     }
+    public function getKategori()
+{
+    $kategori = CategoryBarang::all();
+
+    return response()->json([
+        'success' => true,
+        'data' => $kategori
+    ]);
+}
+
 
     /**
      * POST /api/admin/kategori
