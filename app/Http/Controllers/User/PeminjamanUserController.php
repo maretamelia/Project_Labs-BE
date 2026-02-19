@@ -85,7 +85,7 @@ public function apiStore(Request $request)
         'status' => 'pending',
     ]);
 
-    $barang->decrement('stok', $request->jumlah);
+    // $barang->decrement('stok', $request->jumlah);
 
     return response()->json([
         'success' => true,
@@ -167,15 +167,20 @@ public function apiStore(Request $request)
         $user = Auth::user();
         $peminjaman = Peminjaman::with('barang')->find($id);
 
-        if (!$peminjaman || $peminjaman->user_id !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'Forbidden atau data tidak ditemukan'], 403);
+        if (!$peminjaman) {
+            return response()->json(['success' => false, 'message' => 'data tidak ditemukan'], 403);
+        }
+
+        if ($peminjaman->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Anda tidak memiliki akses, untuk mengembalikan!'], 403);
+
         }
 
         if ($peminjaman->status !== 'disetujui') {
             return response()->json(['success' => false, 'message' => 'Peminjaman belum disetujui admin'], 400);
         }
 
-        $peminjaman->update(['status' => 'pengembalian']);
+        $peminjaman->update(['status' => 'pending_back']);
         return response()->json(['success' => true, 'message' => 'Pengembalian diajukan']);
     }
 

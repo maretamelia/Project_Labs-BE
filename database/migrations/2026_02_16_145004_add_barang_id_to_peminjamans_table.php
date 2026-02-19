@@ -10,9 +10,10 @@ return new class extends Migration {
         Schema::table('peminjamans', function (Blueprint $table) {
             if (!Schema::hasColumn('peminjamans', 'barang_id')) {
                 $table->foreignId('barang_id')
-                      ->after('user_id')
-                      ->constrained('barangs')
-                      ->onDelete('cascade');
+                        ->nullable()
+                        ->after('user_id')
+                        ->constrained('barangs')
+                        ->onDelete('cascade');
             }
         });
     }

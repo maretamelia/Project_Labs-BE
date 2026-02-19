@@ -51,7 +51,7 @@ class PeminjamanAdminController extends Controller
     public function apiIndex()
     {
         $peminjamans = Peminjaman::with(['user', 'barang'])
-            ->whereIn('status', ['pending', 'disetujui', 'pengembalian', 'terlambat'])
+            ->whereIn('status', ['pending','pending_back'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -64,10 +64,22 @@ class PeminjamanAdminController extends Controller
     // POST api/admin/peminjaman/{id}/approve
     public function apiApprove($id)
     {
-        $peminjaman = Peminjaman::findOrFail($id);
+        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
 
         // Update status ke "selesai" (status valid di DB)
-        $peminjaman->status = 'selesai';
+        if($peminjaman->tanggal_pengembalian < now() && $peminjaman->status == 'pending_back'){
+            $peminjaman->keterangan = 'Terlambat pengembalian';
+            $peminjaman->tanggal_pengembalian_selesai = now();
+            $peminjaman->status = 'terlambat';
+            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
+        } else if($peminjaman->status === 'pending_back') {
+            $peminjaman->tanggal_pengembalian_selesai = now();
+            $peminjaman->status = 'selesai';
+            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
+        } else if($peminjaman->status === 'pending'){
+            $peminjaman->status = 'disetujui';
+            $peminjaman->barang->decrement('stok', $peminjaman->jumlah);
+        }
         $peminjaman->save();
 
         return response()->json([
@@ -100,7 +112,7 @@ class PeminjamanAdminController extends Controller
     public function apiRiwayat()
     {
         $peminjamans = Peminjaman::with(['user', 'barang'])
-            ->whereIn('status', ['ditolak', 'selesai'])
+            ->whereIn('status', ['ditolak', 'selesai', 'terlambat','disetujui'])
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -124,16 +136,16 @@ class PeminjamanAdminController extends Controller
     // POST api/peminjaman/{id}/kembalikan
     public function apiUserKembalikan($id)
     {
-        $peminjaman = Peminjaman::findOrFail($id);
+        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
 
-        if ($peminjaman->status !== 'disetujui') {
+        if ($peminjaman->status !== 'disetujui' || $peminjaman->status !== 'pending_back') {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak bisa mengembalikan'
+                'message' => 'Tidak bisa mengembalikan, karena belum disetujui peminjaman atau sudah dikembalikan'
             ], 400);
         }
 
-        $peminjaman->status = 'pengembalian';
+        $peminjaman->status = 'pending_back';
         $peminjaman->save();
 
         return response()->json([
