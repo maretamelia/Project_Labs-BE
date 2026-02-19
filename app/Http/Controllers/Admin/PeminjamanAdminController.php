@@ -63,20 +63,19 @@ class PeminjamanAdminController extends Controller
 
     // POST api/admin/peminjaman/{id}/approve
     public function apiApprove($id)
-{
-    $peminjaman = Peminjaman::findOrFail($id);
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
 
-    // Update status ke "disetujui" dulu
-    $peminjaman->status = 'disetujui';
-    $peminjaman->save();
+        // Update status ke "selesai" (status valid di DB)
+        $peminjaman->status = 'selesai';
+        $peminjaman->save();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Peminjaman berhasil disetujui',
-        'data' => $peminjaman
-    ]);
-}
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Peminjaman berhasil disetujui',
+            'data' => $peminjaman
+        ]);
+    }
 
     // POST api/admin/peminjaman/{id}/reject
     public function apiReject($id, Request $request)
