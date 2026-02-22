@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
 use App\Models\Barang;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -25,23 +23,28 @@ class DashboardController extends Controller
         ]);
     }
 
-    // endpoint /dashboard-stats (INI YANG DIPAKAI REACT)
+    // endpoint /dashboard-stats (dipakai React)
     public function dashboardStats(Request $request)
     {
         $year = $request->query('year', date('Y'));
 
+        // =======================
+        // STATS
+        // =======================
         $totalBarang = Barang::sum('stok');
-        $jumlahDipinjam = Peminjaman::whereIn('status', [
-            'disetujui', 'peminjaman', 'pengembalian', 'terlambat'
-        ])->count();
 
-        $jumlahSelesai = Peminjaman::where('status', 'dikembalikan')->count();
+        // jumlah barang yang sedang dipinjam → status disetujui
+        $jumlahDipinjam = Peminjaman::where('status', 'disetujui')->count();
 
+        // jumlah barang yang sudah selesai → status selesai atau terlambat
+        $jumlahSelesai = Peminjaman::whereIn('status', ['selesai', 'terlambat'])->count();
+
+        // barang dengan stok rendah
         $lowStockItems = Barang::where('stok', '<=', 10)
             ->orderBy('stok', 'asc')
             ->take(5)
             ->get()
-            ->map(fn ($barang) => [
+            ->map(fn($barang) => [
                 'name' => $barang->nama_barang,
                 'count' => $barang->stok,
                 'color' => $barang->stok == 0
@@ -49,6 +52,9 @@ class DashboardController extends Controller
                     : ($barang->stok <= 3 ? '#ffa502' : '#7367f0')
             ]);
 
+        // =======================
+        // CHART DATA
+        // =======================
         $months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agst','Sep','Okt','Nov','Des'];
         $chartData = [];
 
@@ -57,9 +63,18 @@ class DashboardController extends Controller
 
             $chartData[] = [
                 'month' => $month,
-                'peminjaman' => Peminjaman::whereYear('created_at', $year)->whereMonth('created_at', $m)->count(),
-                'pengembalian' => Peminjaman::whereYear('created_at', $year)->whereMonth('created_at', $m)->where('status','dikembalikan')->count(),
-                'terlambat' => Peminjaman::whereYear('created_at', $year)->whereMonth('created_at', $m)->where('status','terlambat')->count(),
+                'peminjaman' => Peminjaman::whereYear('created_at', $year)
+                    ->whereMonth('created_at', $m)
+                    ->where('status', 'disetujui')
+                    ->count(),
+                'pengembalian' => Peminjaman::whereYear('created_at', $year)
+                    ->whereMonth('created_at', $m)
+                    ->whereIn('status', ['selesai', 'terlambat'])
+                    ->count(),
+                'terlambat' => Peminjaman::whereYear('created_at', $year)
+                    ->whereMonth('created_at', $m)
+                    ->where('status', 'terlambat')
+                    ->count(),
             ];
         }
 
