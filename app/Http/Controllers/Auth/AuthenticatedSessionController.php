@@ -89,6 +89,7 @@ class AuthenticatedSessionController extends Controller
             'name'  => $user->name,
             'email' => $user->email,
             'role'  => $user->role, // penting untuk redirect frontend
+            'image' => $user->image,
         ],
         'token' => $token
     ]);
