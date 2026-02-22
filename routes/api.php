@@ -112,4 +112,6 @@ Route::prefix('admin')
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/peminjaman/{id}/kembalikan', [PeminjamanAdminController::class, 'apiUserKembalikan']);
     Route::post('/profile/update', [ProfileController::class, 'store']);
+    Route::get('/profile/notification', [ProfileController::class, 'notification']);
+    Route::post('/profile/notification/{notification}/read', [ProfileController::class, 'readNotification']);
 });

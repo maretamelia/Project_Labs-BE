@@ -5,6 +5,8 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Peminjaman;
 use App\Models\Barang;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -80,9 +82,19 @@ public function apiStore(Request $request)
         'tanggal_peminjaman' => $request->tanggal_peminjaman,
         'tanggal_pengembalian' => $request->tanggal_pengembalian,
         'keterangan' => $request->keterangan,
-
         'status' => 'pending',
     ]);
+
+    $admin = User::where('role', 'admin')->get();
+    foreach ($admin as $item) {
+        Notification::create([
+            'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+            'to_user_id' => $item->id, // ID pengguna yang akan menerima notifikasi
+            'peminjaman_id' => $peminjaman->id,
+            'title' => 'Peminjaman Barang',
+            'body' => 'Permintaan peminjaman barang ' . $barang->nama . ' sebanyak ' . $request->jumlah . ' unit dari ' . $user->name . ' baru masuk, segera cek!',
+        ]);
+    }
 
     // $barang->decrement('stok', $request->jumlah);
 
@@ -180,6 +192,30 @@ public function apiStore(Request $request)
         }
 
         $peminjaman->update(['status' => 'pending_back']);
+
+        $admin = User::where('role', 'admin')->get();
+        if($peminjaman->tanggal_pengembalian > now()){
+            foreach ($admin as $item) {
+                Notification::create([
+                    'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+                    'to_user_id' => $item->id, // ID pengguna yang akan menerima notifikasi
+                    'peminjaman_id' => $peminjaman->id,
+                    'title' => 'Pengembalian Barang',
+                    'body' => 'Permintaan pengembalian barang ' . $peminjaman->barang->nama . ' sebanyak ' . $peminjaman->jumlah . ' unit dari ' . $user->name . ' baru masuk, segera cek!',
+                ]);
+            }
+        } else {
+            foreach ($admin as $item) {
+                Notification::create([
+                    'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+                    'to_user_id' => $item->id, // ID pengguna yang akan menerima notifikasi
+                    'peminjaman_id' => $peminjaman->id,
+                    'title' => 'Pengembalian Barang Terlambat',
+                    'body' => 'Permintaan pengembalian barang ' . $peminjaman->barang->nama . ' sebanyak ' . $peminjaman->jumlah . ' unit dari ' . $user->name . ' terlambat, segera cek untuk mengatur denda!',
+                ]);
+            }
+        }
+
         return response()->json(['success' => true, 'message' => 'Pengembalian diajukan']);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -92,6 +93,53 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Berhasil memperbarui profil',
             'data' => $user,
+        ]);
+    }
+
+    public function notification(Request $request)
+    {
+        $user = Auth::user();
+
+        if(!$user){
+            return response()->json([
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        $notifications = Notification::where('to_user_id', $user->id)
+            ->with(['toUser'])
+            ->where('is_read', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'Berhasil mengambil notifikasi',
+            'data' => $notifications,
+        ]);
+    }
+
+    public function readNotification(Request $request, Notification $notification)
+    {
+        $user = Auth::user();
+
+        if(!$user){
+            return response()->json([
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        if($notification->to_user_id !== $user->id){
+            return response()->json([
+                'message' => 'Notifikasi tidak ditemukan',
+            ], 404);
+        }
+
+        $notification->is_read = true;
+        $notification->save();
+
+        return response()->json([
+            'message' => 'Berhasil membaca notifikasi',
+            'data' => $notification,
         ]);
     }
 }
