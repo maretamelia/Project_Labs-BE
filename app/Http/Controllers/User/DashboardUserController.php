@@ -23,10 +23,10 @@ class DashboardUserController extends Controller
         }
 
         $stats = [
-            'dipinjam'  => Peminjaman::where('user_id', $userId)->where('status', 'dipinjam')->count(),
-            'menunggu'  => Peminjaman::where('user_id', $userId)->where('status', 'menunggu')->count(),
+            'dipinjam'  => Peminjaman::where('user_id', $userId)->where('status', 'disetujui')->count(),
+            'menunggu'  => Peminjaman::where('user_id', $userId)->whereIn('status', ['pending', 'pending_back'])->count(),
             'terlambat' => Peminjaman::where('user_id', $userId)->where('status', 'terlambat')->count(),
-            'kembali'   => Peminjaman::where('user_id', $userId)->where('status', 'dikembalikan')->count(),
+            'kembali'   => Peminjaman::where('user_id', $userId)->where('status', 'selesai')->count(),
         ];
 
         $recent = Peminjaman::with('barang')
@@ -38,9 +38,9 @@ class DashboardUserController extends Controller
                 return [
                     'id' => $item->id,
                     'namaBarang' => optional($item->barang)->nama_barang ?? 'Barang tidak ditemukan',
-                    'jumlah' => $item->jumlah_pinjam ?? 0,
-                    'tanggalPinjam' => $item->tanggal_pinjam
-                        ? Carbon::parse($item->tanggal_pinjam)->format('d/m/Y')
+                    'jumlah' => $item->jumlah ?? 0,
+                    'tanggalPinjam' => $item->tanggal_peminjaman
+                        ? Carbon::parse($item->tanggal_peminjaman)->format('d/m/Y')
                         : '-',
                     'tanggalKembali' => $item->tanggal_pengembalian
                         ? Carbon::parse($item->tanggal_pengembalian)->format('d/m/Y')
