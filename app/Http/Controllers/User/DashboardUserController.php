@@ -42,8 +42,8 @@ class DashboardUserController extends Controller
                     'tanggalPinjam' => $item->tanggal_pinjam
                         ? Carbon::parse($item->tanggal_pinjam)->format('d/m/Y')
                         : '-',
-                    'tanggalKembali' => $item->tanggal_kembali
-                        ? Carbon::parse($item->tanggal_kembali)->format('d/m/Y')
+                    'tanggalKembali' => $item->tanggal_pengembalian
+                        ? Carbon::parse($item->tanggal_pengembalian)->format('d/m/Y')
                         : '-',
                     'status' => ucfirst($item->status ?? '-'),
                 ];
@@ -52,11 +52,11 @@ class DashboardUserController extends Controller
         $reminders = Peminjaman::with('barang')
             ->where('user_id', $userId)
             ->where('status', 'dipinjam')
-            ->whereNotNull('tanggal_kembali')
-            ->whereBetween('tanggal_kembali', [now(), now()->addDays(3)])
+            ->whereNotNull('tanggal_pengembalian')
+            ->whereBetween('tanggal_pengembalian', [now(), now()->addDays(3)])
             ->get()
             ->map(function ($item) {
-                $tanggalKembali = Carbon::parse($item->tanggal_kembali);
+                $tanggalKembali = Carbon::parse($item->tanggal_pengembalian);
                 $selisihHari = now()->diffInDays($tanggalKembali, false);
 
                 $pesan = $selisihHari <= 0
