@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -56,5 +57,41 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    public function store(ProfileUpdateRequest $request)
+    {
+        $data = $request->validated();
+        $user = Auth::user();
+
+        if(!$user){
+            return response()->json([
+                'message' => 'User tidak ditemukan',
+            ], 404);
+        }
+
+        if(isset($data['password'])){
+            $user->password = bcrypt($data['password']);
+        }
+
+        if($request->hasFile('image')){
+            // Hapus gambar lama jika ada
+            if($user->image){
+                Storage::disk('public')->delete($user->image);
+            }
+
+            // Tentukan path penyimpanan
+            $user->image = $request->file('image')->store('users', 'public');;
+
+        }
+
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Berhasil memperbarui profil',
+            'data' => $user,
+        ]);
     }
 }

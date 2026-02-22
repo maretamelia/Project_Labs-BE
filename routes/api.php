@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\BarangController;
 use App\Http\Controllers\Admin\PeminjamanAdminController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,7 +46,7 @@ Route::middleware('auth:sanctum')->post(
 Route::prefix('user')
     ->middleware(['auth:sanctum', 'role:user'])
     ->group(function () {
-    
+
     Route::get('/dashboard', [DashboardUserController::class, 'index']);
 
         // PROFILE USER
@@ -110,4 +111,5 @@ Route::prefix('admin')
     });
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/peminjaman/{id}/kembalikan', [PeminjamanAdminController::class, 'apiUserKembalikan']);
+    Route::post('/profile/update', [ProfileController::class, 'store']);
 });
