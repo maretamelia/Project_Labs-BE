@@ -60,7 +60,7 @@ Route::prefix('user')
         // PEMINJAMAN USER
         Route::prefix('pinjaman')->group(function () {
             Route::get('/', [PeminjamanUserController::class, 'apiIndex']);
-            Route::get('/riwayat', [PeminjamanUserController::class, 'apiRiwayat']);
+            Route::get('/riwayat',[PeminjamanUserController::class, 'apiRiwayat']);
             Route::post('/', [PeminjamanUserController::class, 'apiStore']);
             Route::get('/{peminjaman}', [PeminjamanUserController::class, 'apiShow']);
             Route::put('/{peminjaman}', [PeminjamanUserController::class, 'apiUpdate']);
@@ -89,6 +89,7 @@ Route::prefix('admin')
 
         // KATEGORI
         Route::get('/kategori', [KategoriController::class, 'index']);
+        Route::get('/kategori/{id}/cek-edit', [KategoriController::class, 'cekBisaEdit']);
         Route::post('/kategori', [KategoriController::class, 'store']);
         Route::put('/kategori/{id}', [KategoriController::class, 'update']);
         Route::delete('/kategori/{id}', [KategoriController::class, 'destroy']);

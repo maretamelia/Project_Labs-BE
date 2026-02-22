@@ -113,4 +113,19 @@ class KategoriController extends Controller
             'message' => 'Kategori berhasil dihapus'
         ]);
     }
+    // app/Http/Controllers/KategoriController.php
+public function cekBisaEdit($id)
+{
+    $dipakai = \App\Models\Barang::where('kategori_id', $id)->exists();
+
+    if ($dipakai) {
+        return response()->json([
+            'message' => 'Kategori masih digunakan oleh barang, tidak bisa diedit'
+        ], 400);
+    }
+
+    return response()->json([
+        'message' => 'Kategori bisa diedit'
+    ]);
+}
 }

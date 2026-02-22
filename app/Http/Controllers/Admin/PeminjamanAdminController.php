@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Peminjaman;
+use Carbon\Carbon;
 
 class PeminjamanAdminController extends Controller
 {
@@ -49,45 +50,58 @@ class PeminjamanAdminController extends Controller
 
     // GET api/admin/peminjaman
     public function apiIndex()
-    {
-        $peminjamans = Peminjaman::with(['user', 'barang'])
-            ->whereIn('status', ['pending','pending_back'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+{
+    // Hanya menampilkan peminjaman aktif
+    $activeStatuses = ['pending', 'disetujui', 'pending_back']; // pending_back = menunggu pengembalian
 
-        return response()->json([
-            'success' => true,
-            'data' => $peminjamans
-        ]);
-    }
+    $peminjamans = Peminjaman::with(['user', 'barang'])
+        ->whereIn('status', $activeStatuses)
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $peminjamans
+    ]);
+}
 
     // POST api/admin/peminjaman/{id}/approve
-    public function apiApprove($id)
-    {
-        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
 
-        // Update status ke "selesai" (status valid di DB)
-        if($peminjaman->tanggal_pengembalian < now() && $peminjaman->status == 'pending_back'){
-            $peminjaman->keterangan = 'Terlambat pengembalian';
-            $peminjaman->tanggal_pengembalian_selesai = now();
+public function apiApprove($id)
+{
+    $peminjaman = Peminjaman::with('barang')->findOrFail($id);
+
+    if ($peminjaman->status === 'pending_back') {
+
+        $today = Carbon::now()->toDateString();
+        $batas = Carbon::parse($peminjaman->tanggal_pengembalian)->toDateString();
+
+        $peminjaman->tanggal_pengembalian_selesai = now();
+
+        if ($today > $batas) {
             $peminjaman->status = 'terlambat';
-            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
-        } else if($peminjaman->status === 'pending_back') {
-            $peminjaman->tanggal_pengembalian_selesai = now();
+            $peminjaman->keterangan = 'Terlambat pengembalian';
+        } else {
             $peminjaman->status = 'selesai';
-            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
-        } else if($peminjaman->status === 'pending'){
-            $peminjaman->status = 'disetujui';
-            $peminjaman->barang->decrement('stok', $peminjaman->jumlah);
         }
-        $peminjaman->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Peminjaman berhasil disetujui',
-            'data' => $peminjaman
-        ]);
+        $peminjaman->barang->increment('stok', $peminjaman->jumlah);
     }
+
+    else if ($peminjaman->status === 'pending') {
+        $peminjaman->status = 'disetujui';
+        $peminjaman->barang->decrement('stok', $peminjaman->jumlah);
+    }
+
+    $peminjaman->save();
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Peminjaman berhasil diproses',
+        'data' => $peminjaman
+    ]);
+}
+
 
     // POST api/admin/peminjaman/{id}/reject
     public function apiReject($id, Request $request)
@@ -110,17 +124,20 @@ class PeminjamanAdminController extends Controller
 
     // GET api/admin/peminjaman/riwayat
     public function apiRiwayat()
-    {
-        $peminjamans = Peminjaman::with(['user', 'barang'])
-            ->whereIn('status', ['ditolak', 'selesai', 'terlambat','disetujui'])
-            ->orderBy('updated_at', 'desc')
-            ->get();
+{
+    // Hanya menampilkan peminjaman yang sudah selesai atau ditolak/terlambat
+    $historyStatuses = ['selesai', 'ditolak', 'terlambat'];
 
-        return response()->json([
-            'success' => true,
-            'data' => $peminjamans
-        ]);
-    }
+    $peminjamans = Peminjaman::with(['user', 'barang'])
+        ->whereIn('status', $historyStatuses)
+        ->orderBy('updated_at', 'desc')
+        ->get();
+
+    return response()->json([
+        'success' => true,
+        'data' => $peminjamans
+    ]);
+}
 
     // GET api/admin/peminjaman/{id}
     public function apiShow($id)
@@ -138,7 +155,7 @@ class PeminjamanAdminController extends Controller
     {
         $peminjaman = Peminjaman::with('barang')->findOrFail($id);
 
-        if ($peminjaman->status !== 'disetujui' || $peminjaman->status !== 'pending_back') {
+        if ($peminjaman->status !== 'disetujui' && $peminjaman->status !== 'pending_back') {
             return response()->json([
                 'success' => false,
                 'message' => 'Tidak bisa mengembalikan, karena belum disetujui peminjaman atau sudah dikembalikan'

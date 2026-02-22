@@ -162,9 +162,11 @@ class BarangController extends Controller
     $barang = \App\Models\Barang::create($data);
     $barang->load('kategori');
 
-    return response()->json($barang, 201);
+    return response()->json([
+    'success' => true,
+    'message' => 'Barang berhasil ditambahkan',
+    'data'    => $barang], 201);
     }
-
 
     // 🔹 Update barang lewat API
     public function apiUpdate(Request $request, Barang $barang)
@@ -192,7 +194,11 @@ class BarangController extends Controller
     $barang->update($data);
     $barang->load('kategori');
 
-    return response()->json($barang);
+    return response()->json([
+    'success' => true,
+    'message' => 'Barang berhasil diubah',
+    'data'    => $barang
+]);
 }
 
     public function apiDestroy(Barang $barang)
@@ -202,7 +208,10 @@ class BarangController extends Controller
         }
 
         $barang->delete();
-        return response()->json(['message' => 'Barang berhasil dihapus']);
+        return response()->json([
+    'success' => true,
+    'message' => 'Barang berhasil dihapus'
+]);
     }
     // 🔹 Fungsi pembantu untuk generate kode (pindahkan logika dari store ke sini)
 private function generateKodeBarang($categoryId)

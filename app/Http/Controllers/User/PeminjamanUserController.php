@@ -36,19 +36,18 @@ class PeminjamanUserController extends Controller
      | API - RIWAYAT PEMINJAMAN USER
      ========================= */
     public function apiRiwayat()
-    {
-        $user = Auth::user();
-        $peminjamans = Peminjaman::with(['barang.kategori'])
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['ditolak', 'dikembalikan'])
-            ->orderBy('updated_at', 'desc')
-            ->get();
+{
+    $peminjamans = Peminjaman::with('barang')
+        ->where('user_id', auth()->id())
+        ->whereIn('status', ['ditolak', 'selesai', 'terlambat'])
+        ->orderBy('updated_at', 'desc')
+        ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $peminjamans
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'data' => $peminjamans
+    ]);
+}
 
     /* =========================
      | API - SIMPAN PEMINJAMAN
