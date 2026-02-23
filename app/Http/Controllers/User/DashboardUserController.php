@@ -70,7 +70,7 @@ class DashboardUserController extends Controller
             });
 
         $rules = [
-            'Maksimal 3 barang per peminjaman',
+            'Barang dipinjam sesuai tujuan pembelajaran/praktikum',
             'Keterlambatan dikenakan sanksi',
             'Barang rusak wajib dilaporkan'
         ];
