@@ -108,7 +108,9 @@ Route::prefix('admin')
         Route::get('/peminjaman/{id}', [PeminjamanAdminController::class, 'apiShow']);
         Route::post('/peminjaman/{id}/approve', [PeminjamanAdminController::class, 'apiApprove']);
         Route::post('/peminjaman/{id}/reject', [PeminjamanAdminController::class, 'apiReject']);
+        Route::post('/peminjaman/export', [PeminjamanAdminController::class, 'apiExport']);
     });
+
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/peminjaman/{id}/kembalikan', [PeminjamanAdminController::class, 'apiUserKembalikan']);
     Route::post('/profile/update', [ProfileController::class, 'store']);

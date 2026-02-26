@@ -9,6 +9,9 @@ use App\Models\Peminjaman;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel; 
+use App\Exports\PeminjamanExport;    
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PeminjamanAdminController extends Controller
 {
@@ -53,81 +56,81 @@ class PeminjamanAdminController extends Controller
 
     // GET api/admin/peminjaman
     public function apiIndex()
-{
-    // Hanya menampilkan peminjaman aktif
-    $activeStatuses = ['pending', 'disetujui', 'pending_back']; // pending_back = menunggu pengembalian
+    {
+        // Hanya menampilkan peminjaman aktif
+        $activeStatuses = ['pending', 'disetujui', 'pending_back']; // pending_back = menunggu pengembalian
 
-    $peminjamans = Peminjaman::with(['user', 'barang'])
-        ->whereIn('status', $activeStatuses)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $peminjamans = Peminjaman::with(['user', 'barang'])
+            ->whereIn('status', $activeStatuses)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $peminjamans
-    ]);
-}
-
-    // POST api/admin/peminjaman/{id}/approve
-
-public function apiApprove($id)
-{
-    $user = Auth::user();
-    $peminjaman = Peminjaman::with('barang')->findOrFail($id);
-
-    if ($peminjaman->status === 'pending_back') {
-
-        $today = Carbon::now()->toDateString();
-        $batas = Carbon::parse($peminjaman->tanggal_pengembalian)->toDateString();
-
-        $peminjaman->tanggal_pengembalian_selesai = now();
-
-        if ($today > $batas) {
-            $peminjaman->status = 'terlambat';
-            $peminjaman->keterangan = 'Terlambat pengembalian';
-
-            Notification::create([
-                'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
-                'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
-                'peminjaman_id' => $peminjaman->id,
-                'title' => 'Menyetujui Pengembalian Terlambat',
-                'body' => 'Pengembalian barang ' . $peminjaman->barang->nama . ' telah diterima!',
-            ]);
-        } else {
-            $peminjaman->status = 'selesai';
-
-            Notification::create([
-                'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
-                'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
-                'peminjaman_id' => $peminjaman->id,
-                'title' => 'Menyetujui Pengembalian',
-                'body' => 'Pengembalian barang ' . $peminjaman->barang->nama . ' telah diterima!',
-            ]);
-        }
-
-        $peminjaman->barang->increment('stok', $peminjaman->jumlah);
-    }
-    else if ($peminjaman->status === 'pending') {
-        $peminjaman->status = 'disetujui';
-        $peminjaman->barang->decrement('stok', $peminjaman->jumlah);
-
-        Notification::create([
-            'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
-            'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
-            'peminjaman_id' => $peminjaman->id,
-            'title' => 'Menyetujui Peminjaman',
-            'body' => 'Peminjaman barang ' . $peminjaman->barang->nama . ' berhasil disetujui',
+        return response()->json([
+            'success' => true,
+            'data' => $peminjamans
         ]);
     }
 
-    $peminjaman->save();
+    // POST api/admin/peminjaman/{id}/approve
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Peminjaman berhasil diproses',
-        'data' => $peminjaman
-    ]);
-}
+    public function apiApprove($id)
+    {
+        $user = Auth::user();
+        $peminjaman = Peminjaman::with('barang')->findOrFail($id);
+
+        if ($peminjaman->status === 'pending_back') {
+
+            $today = Carbon::now()->toDateString();
+            $batas = Carbon::parse($peminjaman->tanggal_pengembalian)->toDateString();
+
+            $peminjaman->tanggal_pengembalian_selesai = now();
+
+            if ($today > $batas) {
+                $peminjaman->status = 'terlambat';
+                $peminjaman->keterangan = 'Terlambat pengembalian';
+
+                Notification::create([
+                    'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+                    'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
+                    'peminjaman_id' => $peminjaman->id,
+                    'title' => 'Menyetujui Pengembalian Terlambat',
+                    'body' => 'Pengembalian barang ' . $peminjaman->barang->nama . ' telah diterima!',
+                ]);
+            } else {
+                $peminjaman->status = 'selesai';
+
+                Notification::create([
+                    'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+                    'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
+                    'peminjaman_id' => $peminjaman->id,
+                    'title' => 'Menyetujui Pengembalian',
+                    'body' => 'Pengembalian barang ' . $peminjaman->barang->nama . ' telah diterima!',
+                ]);
+            }
+
+            $peminjaman->barang->increment('stok', $peminjaman->jumlah);
+        }
+        else if ($peminjaman->status === 'pending') {
+            $peminjaman->status = 'disetujui';
+            $peminjaman->barang->decrement('stok', $peminjaman->jumlah);
+
+            Notification::create([
+                'user_id' => $user->id, // ID pengguna yang mengirim notifikasi
+                'to_user_id' => $peminjaman->user_id, // ID pengguna yang akan menerima notifikasi
+                'peminjaman_id' => $peminjaman->id,
+                'title' => 'Menyetujui Peminjaman',
+                'body' => 'Peminjaman barang ' . $peminjaman->barang->nama . ' berhasil disetujui',
+            ]);
+        }
+
+        $peminjaman->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Peminjaman berhasil diproses',
+            'data' => $peminjaman
+        ]);
+    }
 
 
     // POST api/admin/peminjaman/{id}/reject
@@ -172,20 +175,20 @@ public function apiApprove($id)
 
     // GET api/admin/peminjaman/riwayat
     public function apiRiwayat()
-{
-    // Hanya menampilkan peminjaman yang sudah selesai atau ditolak/terlambat
-    $historyStatuses = ['selesai', 'ditolak', 'terlambat'];
+    {
+        // Hanya menampilkan peminjaman yang sudah selesai atau ditolak/terlambat
+        $historyStatuses = ['selesai', 'ditolak', 'terlambat'];
 
-    $peminjamans = Peminjaman::with(['user', 'barang'])
-        ->whereIn('status', $historyStatuses)
-        ->orderBy('updated_at', 'desc')
-        ->get();
+        $peminjamans = Peminjaman::with(['user', 'barang'])
+            ->whereIn('status', $historyStatuses)
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
-    return response()->json([
-        'success' => true,
-        'data' => $peminjamans
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'data' => $peminjamans
+        ]);
+    }
 
     // GET api/admin/peminjaman/{id}
     public function apiShow($id)
@@ -217,5 +220,31 @@ public function apiApprove($id)
             'success' => true,
             'status' => $peminjaman->status
         ]);
+    }
+
+    // Export Riwayat ke Excel
+    public function apiExport(Request $request)
+    {
+        $startDate = $request->input('startDate');
+        $endDate   = $request->input('endDate');
+        $status    = $request->input('status');
+
+        $query = Peminjaman::with(['user', 'barang'])
+            ->whereIn('status', ['selesai', 'ditolak', 'terlambat']);
+
+        if ($startDate) $query->whereDate('tanggal_peminjaman', '>=', $startDate);
+        if ($endDate)   $query->whereDate('tanggal_peminjaman', '<=', $endDate);
+        if ($status)    $query->where('status', $status);
+
+        $data = $query->orderBy('updated_at', 'desc')->get();
+
+        // LOGIKA PDF
+        if ($request->input('format') === 'pdf') {
+            $pdf = Pdf::loadView('admin.peminjaman.pdf', compact('data')); 
+            return $pdf->download('riwayat-peminjaman.pdf');
+        }
+
+        // LOGIKA EXCEL
+        return Excel::download(new PeminjamanExport($data), 'riwayat-peminjaman.xlsx');
     }
 }
